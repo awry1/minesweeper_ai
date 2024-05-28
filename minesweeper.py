@@ -127,6 +127,11 @@ def find_adjacent_numbers(position, size, player_board):
 
 
 def solve_gauss(matrix):
+    # debug print matrix
+    print("\nMatrix:")
+    for row in matrix:
+        print(' '.join(['+' + str(element) if element != 0 else ' 0' for element in row]))
+
     # modified code from copilot
     for i in range(len(matrix)):
         # find pivot
@@ -143,6 +148,14 @@ def solve_gauss(matrix):
             factor = matrix[j][i]
             for k in range(len(matrix[j])):
                 matrix[j][k] -= factor * matrix[i][k]
+        
+    # debug print solved matrix and quit
+    print("\nSolved matrix:")
+    for row in matrix:
+        print(' '.join(['+' + str(element) if element > 0 else '-' + str(abs(element)) if element < 0 else ' 0' for element in row]))
+    
+    quit()
+
     return matrix
 
 
@@ -170,17 +183,8 @@ def solve_analytical(size, player_board):
         number_pos = matrix[i][len(undiscovered)]
         matrix[i][len(undiscovered)] = ord(player_board[number_pos[0]][number_pos[1]]) - 48    # convert number from board to int
 
-    # debug print matrix
-    print("Matrix:")
-    print(matrix)
-
-    # ready for Gauss elimination
-
+    # solve with Gauss elimination
     solve_gauss(matrix)
-
-    # debug print matrix
-    print("Matrix:")
-    print(matrix)
 
     # find moves and mines
     # append moves
