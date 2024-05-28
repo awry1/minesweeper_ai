@@ -130,7 +130,7 @@ def solve_gauss(matrix):
     # debug print matrix
     print("\nMatrix:")
     for row in matrix:
-        print(' '.join(['+' + str(element) if element != 0 else ' 0' for element in row]))
+        print(' '.join(['+' + str(element) if element != 0 else ' _' for element in row]))
 
     # modified code from copilot
     for i in range(len(matrix)):
@@ -152,7 +152,7 @@ def solve_gauss(matrix):
     # debug print solved matrix and quit
     print("\nSolved matrix:")
     for row in matrix:
-        print(' '.join(['+' + str(element) if element > 0 else '-' + str(abs(element)) if element < 0 else ' 0' for element in row]))
+        print(' '.join(['+' + str(element) if element > 0 else str(element) if element < 0 else ' _' for element in row]))
     
     quit()
 
