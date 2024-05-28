@@ -127,9 +127,7 @@ def find_adjacent_numbers(position, size, player_board):
 
 
 def solve_gauss(matrix):
-    # code from https://rosettacode.org/wiki/Gaussian_elimination#Python (at least thats what copilot says)
-
-    # Gauss elimination
+    # modified code from copilot
     for i in range(len(matrix)):
         # find pivot
         pivot = matrix[i][i]
@@ -137,7 +135,7 @@ def solve_gauss(matrix):
             continue
         # divide row by pivot
         for j in range(len(matrix[i])):
-            matrix[i][j] /= pivot
+            matrix[i][j] //= pivot  # can I safely use // here?
         # subtract row from other rows
         for j in range(len(matrix)):
             if j == i:
@@ -173,16 +171,16 @@ def solve_analytical(size, player_board):
         matrix[i][len(undiscovered)] = ord(player_board[number_pos[0]][number_pos[1]]) - 48    # convert number from board to int
 
     # debug print matrix
-    # print("Matrix:")
-    # print(matrix)
+    print("Matrix:")
+    print(matrix)
 
     # ready for Gauss elimination
 
-    # solve_gauss(matrix)
+    solve_gauss(matrix)
 
     # debug print matrix
-    # print("Matrix:")
-    # print(matrix)
+    print("Matrix:")
+    print(matrix)
 
     # find moves and mines
     # append moves
