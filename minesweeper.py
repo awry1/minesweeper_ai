@@ -40,12 +40,12 @@ def ai_take_input(size, game_started, player_board):
         #   moves = solve_analytical(size, player_board)
         # row, col = moves.pop
 
-    print('AI chose:', row, col, "\n")
+    print('AI chose:', col, row, "\n")
     return row, col
 
 
 def take_input():
-    row, col = map(int, input('Enter x and y: ').split())
+    col, row = map(int, input('Enter x and y: ').split())
     return row, col
 
 
