@@ -131,23 +131,47 @@ def solve_gauss(matrix):
     print("\nMatrix:")
     for row in matrix:
         print(' '.join(['+' + str(element) if element != 0 else ' _' for element in row]))
+    
+    n = len(matrix)
+    m = len(matrix[0])  # Number of columns in the matrix
 
-    # modified code from copilot
-    for i in range(len(matrix)):
-        # find pivot
-        pivot = matrix[i][i]
-        if pivot == 0:
+    for i in range(min(n, m - 1)):  # Ensure we do not exceed the number of columns
+        # Find the pivot row
+        pivot_row = i
+        while pivot_row < n and matrix[pivot_row][i] == 0:
+            pivot_row += 1
+
+        if pivot_row == n:
             continue
-        # divide row by pivot
-        for j in range(len(matrix[i])):
-            matrix[i][j] //= pivot  # can I safely use // here?
-        # subtract row from other rows
-        for j in range(len(matrix)):
-            if j == i:
-                continue
-            factor = matrix[j][i]
-            for k in range(len(matrix[j])):
-                matrix[j][k] -= factor * matrix[i][k]
+
+        # Swap rows to make the pivot row the current row
+        if pivot_row != i:
+            matrix[i], matrix[pivot_row] = matrix[pivot_row], matrix[i]
+
+        # Perform elimination
+        for j in range(n):
+            if j != i and matrix[j][i] != 0:
+                factor = matrix[j][i] // matrix[i][i]
+                for k in range(i, m):
+                    matrix[j][k] -= factor * matrix[i][k]
+
+    # Normalize rows to handle floating-point issues and to match expected output format
+    for i in range(n):
+        row_nonzero = next((matrix[i][j] for j in range(m - 1) if matrix[i][j] != 0), None)
+        if row_nonzero:
+            factor = row_nonzero
+            for k in range(m):
+                matrix[i][k] //= factor
+
+    # Ensure matrix is in reduced row echelon form
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1):
+            if matrix[i][j] != 0:
+                for k in range(i):
+                    factor = matrix[k][j]
+                    for l in range(m):
+                        matrix[k][l] -= factor * matrix[i][l]
+                break
         
     # debug print solved matrix and quit
     print("\nSolved matrix:")
