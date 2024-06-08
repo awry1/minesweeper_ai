@@ -93,7 +93,7 @@ def print_end_board(game_board, player_board):
             if game_board[row][col] == 'X':
                 player_board[row][col] = 'X'
     print_board(player_board)
-            
+
 
 def gameloop(size, num_mines, seed):
     game_board, player_board = create_boards(size, num_mines, seed)
@@ -145,7 +145,7 @@ def find_adjacent_numbers(position, size, player_board):
 
 
 def solve_gauss(matrix):
-    n = len(matrix)     # Number of rows in the matrix
+    n = len(matrix)  # Number of rows in the matrix
     m = len(matrix[0])  # Number of columns in the matrix
 
     for i in range(min(n, m - 1)):  # Ensure we do not exceed the number of columns
@@ -270,6 +270,14 @@ def ai_take_input(size, game_started, player_board):
     return row, col
 
 
+def save_game_state(board, move, filename):
+    with open(filename, 'a') as file:
+        for row in board:
+            row_str = ' '.join(['?' if cell == ' ' else cell for cell in row])
+            file.write(row_str + '\n')
+        file.write(f"{move[0]} {move[1]}\n")
+
+
 def ai_gameloop(size, num_mines, seed):
     game_board, player_board = create_boards(size, num_mines, seed)
     game_started = False
@@ -292,28 +300,29 @@ def ai_gameloop(size, num_mines, seed):
         else:
             game_started = True
             reveal_squares(game_board, player_board, row, col)
+            save_game_state(player_board, (row, col), 'trainingData.txt')
             if is_game_finished(game_board, player_board):
                 print_board(player_board)
                 print('\nWin')
                 return 'W'
-            
+
 
 def simulation(size, num_mines, seed, iterations=100):
-        wins, loses, loses1, undecided = 0, 0, 0, 0
+    wins, loses, loses1, undecided = 0, 0, 0, 0
 
-        for _ in range(iterations):
-            result = ai_gameloop(size, num_mines, seed)
-            if result == '?':
-                undecided += 1
-            elif result == 'W':
-                wins += 1
-            elif result == 'L1':
-                loses1 += 1
-            else:
-                loses += 1
+    for _ in range(iterations):
+        result = ai_gameloop(size, num_mines, seed)
+        if result == '?':
+            undecided += 1
+        elif result == 'W':
+            wins += 1
+        elif result == 'L1':
+            loses1 += 1
+        else:
+            loses += 1
 
-        print(f"\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}")
-        quit()
+    print(f"\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}")
+    quit()
 
 
 if __name__ == '__main__':
