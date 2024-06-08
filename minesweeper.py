@@ -282,7 +282,7 @@ def ai_gameloop(size, num_mines, seed):
     game_board, player_board = create_boards(size, num_mines, seed)
     game_started = False
     while True:
-        print_board(player_board)
+        # print_board(player_board)
 
         row, col = ai_take_input(size, game_started, player_board)
         if row is None or col is None:
@@ -290,7 +290,7 @@ def ai_gameloop(size, num_mines, seed):
             return '?'
 
         if is_mine(game_board, row, col):
-            print_end_board(game_board, player_board)
+            # print_end_board(game_board, player_board)
             if not game_started:
                 print('\nLose on first')
                 return 'L1'
@@ -298,16 +298,17 @@ def ai_gameloop(size, num_mines, seed):
             return 'L'
 
         else:
-            game_started = True
             reveal_squares(game_board, player_board, row, col)
-            save_game_state(player_board, (row, col), 'trainingData.txt')
+            if game_started:
+                save_game_state(player_board, (row, col), 'trainingData.txt')
+            game_started = True
             if is_game_finished(game_board, player_board):
-                print_board(player_board)
+                # print_board(player_board)
                 print('\nWin')
                 return 'W'
 
 
-def simulation(size, num_mines, seed, iterations=100):
+def simulation(size, num_mines, seed, iterations=500):
     wins, loses, loses1, undecided = 0, 0, 0, 0
 
     for _ in range(iterations):
