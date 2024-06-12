@@ -25,7 +25,7 @@ def generate_evaluation_data(size, num_mines, num_boards):
             game_started = True
 
         if moves:  # If any moves have been made, add the game to the evaluation data
-            board_state = player_board.copy()  # Create a deep copy of the player board
+            board_state = player_board.copy()
             move = moves[0]
             evaluation_data.append((board_state, move))
 

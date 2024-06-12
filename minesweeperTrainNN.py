@@ -4,6 +4,7 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 import re
 
+# Creating custom dataset for boards and moves
 class MinesweeperDataset(Dataset):
     def __init__(self, file_path, board_size):
         self.board_size = board_size
@@ -43,7 +44,7 @@ class MinesweeperDataset(Dataset):
         return numeric_board.flatten()
 
     def is_valid_move(self, line):
-        # Regular expression pattern to match a tuple of integers
+        # Checks if pattern matches move coordinates
         pattern = r'^\d+\s+\d+$'
         return bool(re.match(pattern, line.strip()))
 
@@ -116,7 +117,7 @@ def train_model(train_loader, input_size, hidden_sizes, output_size, learning_ra
 
 if __name__ == '__main__':
     file_path = 'trainingData.txt'
-    board_size = 10  # Change this to the size of your boards
+    board_size = 10
     dataset = MinesweeperDataset(file_path, board_size)
     train_loader = DataLoader(dataset, batch_size=128, shuffle=True)
 
