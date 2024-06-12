@@ -4,4 +4,4 @@ To Do:
 3) ~~Find all possible moves (and mines)~~
 4) ~~Choose best move~~
 5) ~~Generate data for AI model to learn from~~
-6) ~~Write AI model using pytorch~~ (but sucks Szymański's balls)
+6) ~~Write AI model using pytorch~~ (but works very badly)
