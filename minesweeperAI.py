@@ -256,35 +256,6 @@ def solve_analytical(size, player_board):
     return moves, mines
 
 
-def ai_take_input(size, game_started, player_board):
-    row, col = None, None
-
-    if not game_started:
-        row, col = random.randint(0, size - 1), random.randint(0, size - 1)
-    else:
-        moves, mines = solve_analytical(size, player_board)
-        if len(moves) > 0:
-            row, col = moves[0]
-        else:
-            row, col = choose_least_risky_move(size, player_board)
-
-    # print('\nAI chose:', col, row)
-    return row, col
-
-def choose_least_risky_move(size, player_board):
-    min_risk = float('inf')
-    best_move = None
-
-    for row in range(size):
-        for col in range(size):
-            if player_board[row][col] == ' ':
-                risk = estimate_risk(player_board, row, col)
-                if risk < min_risk:
-                    min_risk = risk
-                    best_move = (row, col)
-
-    return best_move
-
 def estimate_risk(player_board, row, col):
     total_unknown = 0
     total_mines = 0
@@ -303,20 +274,37 @@ def estimate_risk(player_board, row, col):
         return 0
     return total_mines / total_unknown
 
-""" def ai_take_input(size, game_started, player_board):
+
+def choose_least_risky_move(size, player_board):
+    min_risk = float('inf')
+    best_move = None
+
+    for row in range(size):
+        for col in range(size):
+            if player_board[row][col] == ' ':
+                risk = estimate_risk(player_board, row, col)
+                if risk < min_risk:
+                    min_risk = risk
+                    best_move = (row, col)
+
+    return best_move
+
+
+def ai_take_input(size, game_started, player_board):
     row, col = None, None
 
     if not game_started:
         row, col = random.randint(0, size - 1), random.randint(0, size - 1)
-
     else:
         moves, mines = solve_analytical(size, player_board)
         if len(moves) > 0:
-            row = moves[0][0]
-            col = moves[0][1]
+            row, col = moves[0]
+        # if no definite moves, choose the least risky move
+        else:
+            row, col = choose_least_risky_move(size, player_board)
 
     # print('\nAI chose:', col, row)
-    return row, col """
+    return row, col
 
 
 def save_game_state(board, move, filename):
