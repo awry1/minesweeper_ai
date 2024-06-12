@@ -10,6 +10,7 @@ class MinesweeperDataset(Dataset):
         self.board_size = board_size
         self.data = self.load_data(file_path)
 
+
     def load_data(self, file_path):
         with open(file_path, 'r') as file:
             lines = file.readlines()
@@ -32,6 +33,7 @@ class MinesweeperDataset(Dataset):
 
         return list(zip(boards, moves))
 
+
     def board_to_numeric(self, board):
         mapping = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '?': 9}
         numeric_board = np.zeros((self.board_size, self.board_size), dtype=int)
@@ -43,13 +45,16 @@ class MinesweeperDataset(Dataset):
 
         return numeric_board.flatten()
 
+
     def is_valid_move(self, line):
         # Checks if pattern matches move coordinates
         pattern = r'^\d+\s+\d+$'
         return bool(re.match(pattern, line.strip()))
 
+
     def __len__(self):
         return len(self.data)
+
 
     def __getitem__(self, idx):
         board, move = self.data[idx]
@@ -57,26 +62,8 @@ class MinesweeperDataset(Dataset):
         move = torch.tensor(move, dtype=torch.int)
         return board, move
 
-# Step 2: Define the Model
-""" class MinesweeperMLP(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(MinesweeperMLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, hidden_size)
-        self.fc4 = nn.Linear(hidden_size, hidden_size)
-        self.fc5 = nn.Linear(hidden_size, hidden_size)
-        self.fc6 = nn.Linear(hidden_size, output_size)
-        self.relu = nn.ReLU()
 
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x))
-        x = self.relu(self.fc4(x))
-        x = self.relu(self.fc5(x))
-        x = self.fc6(x)
-        return x """
+# Step 2: Define the Model
 class MinesweeperMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(MinesweeperMLP, self).__init__()
@@ -85,6 +72,7 @@ class MinesweeperMLP(nn.Module):
             self.hidden_layer.extend([nn.Linear(hidden_size[i], hidden_size[i+1])])
         self.output_layer = nn.Linear(hidden_size[-1], output_size)
         self.dropout = nn.Dropout(p=0.5)
+
 
     def forward(self, x):
         for layer in self.hidden_layer:
