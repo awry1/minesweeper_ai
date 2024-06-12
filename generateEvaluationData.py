@@ -1,5 +1,4 @@
 import os
-import random
 
 from minesweeperAI import create_boards, is_game_finished, ai_take_input, reveal_squares, is_mine
 

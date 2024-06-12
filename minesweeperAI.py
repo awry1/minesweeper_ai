@@ -1,7 +1,8 @@
 import os
+import torch
 import random
 from sympy import *
-
+from minesweeperTrainNN import MinesweeperMLP
 
 def create_boards(size, num_mines, seed):
     if seed is not None:
@@ -260,6 +261,53 @@ def ai_take_input(size, game_started, player_board):
 
     if not game_started:
         row, col = random.randint(0, size - 1), random.randint(0, size - 1)
+    else:
+        moves, mines = solve_analytical(size, player_board)
+        if len(moves) > 0:
+            row, col = moves[0]
+        else:
+            row, col = choose_least_risky_move(size, player_board)
+
+    # print('\nAI chose:', col, row)
+    return row, col
+
+def choose_least_risky_move(size, player_board):
+    min_risk = float('inf')
+    best_move = None
+
+    for row in range(size):
+        for col in range(size):
+            if player_board[row][col] == ' ':
+                risk = estimate_risk(player_board, row, col)
+                if risk < min_risk:
+                    min_risk = risk
+                    best_move = (row, col)
+
+    return best_move
+
+def estimate_risk(player_board, row, col):
+    total_unknown = 0
+    total_mines = 0
+
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            x = row + i
+            y = col + j
+            if 0 <= x < len(player_board) and 0 <= y < len(player_board[0]):
+                if player_board[x][y] == ' ':
+                    total_unknown += 1
+                elif player_board[x][y] > '0':
+                    total_mines += ord(player_board[x][y]) - 48
+
+    if total_unknown == 0:
+        return 0
+    return total_mines / total_unknown
+
+""" def ai_take_input(size, game_started, player_board):
+    row, col = None, None
+
+    if not game_started:
+        row, col = random.randint(0, size - 1), random.randint(0, size - 1)
 
     else:
         moves, mines = solve_analytical(size, player_board)
@@ -268,7 +316,7 @@ def ai_take_input(size, game_started, player_board):
             col = moves[0][1]
 
     # print('\nAI chose:', col, row)
-    return row, col
+    return row, col """
 
 
 def save_game_state(board, move, filename):
@@ -294,14 +342,15 @@ def ai_gameloop(size, num_mines, seed, filename):
             # print_end_board(game_board, player_board)
             if not game_started:
                 # print('\nLose on first')
-                return 'L1'
+                # return 'L1'
+                continue
             # print('\nLose')
             return 'L'
 
         else:
-            reveal_squares(game_board, player_board, row, col)
             if game_started:
                 save_game_state(player_board, (row, col), filename)
+            reveal_squares(game_board, player_board, row, col)
             game_started = True
             if is_game_finished(game_board, player_board):
                 # print_board(player_board)
@@ -309,7 +358,7 @@ def ai_gameloop(size, num_mines, seed, filename):
                 return 'W'
 
 
-def simulation(size, num_mines, seed, iterations=1000):
+def simulation_ai(size, num_mines, seed, iterations=10000):
     wins, loses, loses1, undecided = 0, 0, 0, 0
     filename = 'trainingData.txt'
 
@@ -318,7 +367,106 @@ def simulation(size, num_mines, seed, iterations=1000):
         os.remove(filename)
 
     for _ in range(iterations):
+        if _ % 100 == 0:
+            print(f"Progress: {_}/{iterations}")
         result = ai_gameloop(size, num_mines, seed, filename)
+        if result == '?':
+            undecided += 1
+        elif result == 'W':
+            wins += 1
+        elif result == 'L1':
+            loses1 += 1
+        else:
+            loses += 1
+
+    print(f"\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}")
+    quit()
+
+
+########################## PyTorch part starts here ##########################
+def load_model(input_size, hidden_size, output_size):
+    model = MinesweeperMLP(input_size, hidden_size, output_size)
+    model.load_state_dict(torch.load('minesweeper_nn.pth'))
+    model.eval()  # Set the model to evaluation mode
+    return model
+
+
+def convert_board_to_numerical(player_board):
+    # Define mapping from characters to numerical values
+    mapping = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, ' ': 9}
+
+    # Convert characters to numerical values based on the mapping
+    numerical_board = [[mapping[cell] if cell in mapping else 0 for cell in row] for row in player_board]
+
+    return numerical_board
+
+
+def torch_take_input(size, game_started, player_board, model):
+    row, col = None, None
+
+    if not game_started:
+        row, col = random.randint(0, size - 1), random.randint(0, size - 1)
+
+    with torch.no_grad():  # Disable gradient computation during evaluation
+            # Convert player_board list to tensor
+            player_board_numerical = convert_board_to_numerical(player_board)
+            player_board_tensor = torch.tensor(player_board_numerical, dtype=torch.float32).view(1, size * size)
+
+            # Forward pass to get predicted move
+            predicted_move = model(player_board_tensor)
+
+            # Round the predicted move to integers
+            predicted_move = torch.round(predicted_move).long()
+            row = predicted_move[0][0].item()
+            col = predicted_move[0][1].item()
+    
+    # print('\nAI chose:', col, row)
+    return row, col
+
+
+def torch_gameloop(size, num_mines, seed, model):
+    game_board, player_board = create_boards(size, num_mines, seed)
+    last_input = None
+    game_started = False
+    while True:
+        # print_board(player_board)
+
+        row, col = torch_take_input(size, game_started, player_board, model)
+        if not is_input_valid(row, col, size):
+            # print('\nUndecided')
+            return '?'
+        if row is None or col is None or (row, col) == last_input:
+            # print('\nUndecided')
+            return '?'
+        last_input = (row, col)
+
+        if is_mine(game_board, row, col):
+            # print_end_board(game_board, player_board)
+            if not game_started:
+                # print('\nLose on first')
+                # return 'L1'
+                continue
+            # print('\nLose')
+            return 'L'
+
+        else:
+            reveal_squares(game_board, player_board, row, col)
+            game_started = True
+            if is_game_finished(game_board, player_board):
+                # print_board(player_board)
+                # print('\nWin')
+                return 'W'
+
+
+def simulation_torch(size, num_mines, seed, iterations=100000):
+    model = load_model(input_size=(size * size), hidden_size=[300,200], output_size=2)
+
+    wins, loses, loses1, undecided = 0, 0, 0, 0
+
+    for _ in range(iterations):
+        if _ % 100 == 0:
+            print(f"Progress: {_}/{iterations}")
+        result = torch_gameloop(size, num_mines, seed, model)
         if result == '?':
             undecided += 1
         elif result == 'W':
@@ -337,9 +485,13 @@ if __name__ == '__main__':
     num_mines = 10
     seed = None
 
+    TORCH = True
     AI = True
 
-    if AI:
-        simulation(size, num_mines, seed)
+    if TORCH:
+        simulation_torch(size, num_mines, seed)
     else:
-        gameloop(size, num_mines, seed)
+        if AI:
+            simulation_ai(size, num_mines, seed)
+        else:
+            gameloop(size, num_mines, seed)
