@@ -1,45 +1,32 @@
 import random
 
-from minesweeperAI import create_boards, is_game_finished, ai_take_input, reveal_squares, is_mine
+def create_boards(size, num_mines, seed=None):
+    if seed is not None:
+        random.seed(seed)
 
+    game_board = [[' ' for _ in range(size)] for _ in range(size)]
+    player_board = [[' ' for _ in range(size)] for _ in range(size)]
 
-def generate_evaluation_data(size, num_mines, num_boards):
-    evaluation_data = []
+    mines = random.sample(range(size * size), num_mines)
+    for i in mines:
+        row = i // size
+        col = i % size
+        game_board[row][col] = 'X'
 
+    return game_board, player_board
+
+def save_board(file, board, move):
+    with open(file, 'a') as f:
+        for row in board:
+            f.write(' '.join(row) + '\n')
+        f.write(f'{move[0]} {move[1]}\n\n')
+
+def generate_data(file, num_boards=1000, size=10, num_mines=15):
     for _ in range(num_boards):
-        game_board, player_board = create_boards(size, num_mines, seed=None)
-        game_started = False
-
-        moves = []
-
-        while not is_game_finished(game_board, player_board):
-            row, col = ai_take_input(size, game_started, player_board=player_board)
-            if (row is None and col is None) or is_mine(game_board, row, col):
-                break  # Skip the game if no move made
-            if game_started:
-                moves.append((row, col))
-            reveal_squares(game_board, player_board, row, col)
-            game_started = True
-
-        if moves:  # If any moves have been made, add the game to the evaluation data
-            for i in range(len(moves)):
-                board_state = player_board.copy()  # Create a deep copy of the player board
-                move = moves[i]
-                evaluation_data.append((board_state, move))
-
-    return evaluation_data
+        game_board, player_board = create_boards(size, num_mines)
+        move = (random.randint(0, size-1), random.randint(0, size-1))
+        save_board(file, game_board, move)
 
 if __name__ == '__main__':
-    size = 10
-    num_mines = 10
-    num_boards = 100  # Number of evaluation boards to generate
-
-    evaluation_data = generate_evaluation_data(size, num_mines, num_boards)
-
-    # Save the evaluation data to a text file
-    with open('evaluationData.txt', 'w') as file:
-        for board_state, move in evaluation_data:
-            for row in board_state:
-                row_str = ' '.join(['?' if cell == ' ' else cell for cell in row])
-                file.write(row_str + '\n')
-            file.write(f"{move[0]} {move[1]}\n")
+    generate_data('evaluationData.txt', num_boards=2000)
+    generate_data('trainingData.txt', num_boards=10000)

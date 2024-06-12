@@ -3,11 +3,14 @@ import torch
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 import re
+from sklearn.preprocessing import StandardScaler
 
 class MinesweeperDataset(Dataset):
     def __init__(self, file_path, board_size):
         self.board_size = board_size
+        self.scaler = StandardScaler()
         self.data = self.load_data(file_path)
+        self.fit_scaler()
 
     def load_data(self, file_path):
         with open(file_path, 'r') as file:
@@ -30,6 +33,10 @@ class MinesweeperDataset(Dataset):
         moves = np.array(moves)
         return list(zip(boards, moves))
 
+    def fit_scaler(self):
+        all_boards = np.array([board for board, _ in self.data])
+        self.scaler.fit(all_boards)
+
     def board_to_numeric(self, board):
         mapping = {'?': 0, 'X': 1, '0': 2, '1': 3, '2': 4, '3': 5, '4': 6, '5': 7, '6': 8, '7': 9, '8': 10}
         numeric_board = np.zeros((self.board_size, self.board_size), dtype=int)
@@ -42,7 +49,6 @@ class MinesweeperDataset(Dataset):
         return numeric_board.flatten()
 
     def is_valid_move(self, line):
-        # Regular expression pattern to match a tuple of integers
         pattern = r'^\d+\s+\d+$'
         return bool(re.match(pattern, line.strip()))
 
@@ -51,27 +57,33 @@ class MinesweeperDataset(Dataset):
 
     def __getitem__(self, idx):
         board, move = self.data[idx]
+        board = self.scaler.transform(board.reshape(1, -1))  # Normalize input
         board = torch.tensor(board, dtype=torch.float32)
-        move = torch.tensor(move, dtype=torch.long)
+        move = torch.tensor(move, dtype=torch.float32).view(1, -1)  # Reshape target tensor
         return board, move
 
-# Step 2: Define the Model
+
 class MinesweeperNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_sizes, output_size):
         super(MinesweeperNN, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.hidden_layers = nn.ModuleList([nn.Linear(input_size, hidden_sizes[0])])
+        for i in range(len(hidden_sizes) - 1):
+            self.hidden_layers.extend([nn.Linear(hidden_sizes[i], hidden_sizes[i+1])])
+        self.output_layer = nn.Linear(hidden_sizes[-1], output_size)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
+        for layer in self.hidden_layers:
+            x = torch.relu(layer(x))
+            x = self.dropout(x)
+        x = self.output_layer(x)
         return x
 
-# Step 3 & 4: Define Loss Function and Optimizer and create Train Iteration Loop
-def train_model(train_loader, input_size, hidden_size, output_size, learning_rate=0.0001, num_epochs=300, weight_decay=0.001):
-    model = MinesweeperNN(input_size, hidden_size, output_size)
+def train_model(train_loader, input_size, hidden_sizes, output_size, learning_rate=0.0001, num_epochs=300, weight_decay=0.001):
+    model = MinesweeperNN(input_size, hidden_sizes, output_size).to(device)  # Move model to device
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     for epoch in range(num_epochs):
         model.train()
@@ -83,18 +95,23 @@ def train_model(train_loader, input_size, hidden_size, output_size, learning_rat
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-        print(f"Loss: {running_loss / len(train_loader)}")
+        scheduler.step()
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss / len(train_loader)}")
 
     torch.save(model.state_dict(), 'minesweeper_nn.pth')
 
 if __name__ == '__main__':
+    # Check if GPU is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
+
     file_path = 'trainingData.txt'
-    board_size = 10  # Change this to the size of your boards
+    board_size = 10
     dataset = MinesweeperDataset(file_path, board_size)
     train_loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-    input_size = board_size * board_size  # Example for a 10x10 board
-    hidden_size = 500
-    output_size = 2  # Move coordinates (row, col)
+    input_size = board_size * board_size
+    hidden_sizes = [200]  # Define more dense layers
+    output_size = 2
 
-    train_model(train_loader, input_size, hidden_size, output_size)
+    train_model(train_loader, input_size, hidden_sizes, output_size)

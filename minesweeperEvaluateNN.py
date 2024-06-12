@@ -27,7 +27,8 @@ def evaluate_model(model, dataset):
 if __name__ == '__main__':
     board_size = 10  # Change this to the size of your boards
     # Load the trained model
-    model = MinesweeperNN(input_size=100, hidden_size=500, output_size=2)  # Modify input_size and hidden_size accordingly
+    hidden_sizes = [200]
+    model = MinesweeperNN(input_size=100, hidden_sizes=hidden_sizes, output_size=2)  # Modify input_size and hidden_size accordingly
     model.load_state_dict(torch.load('minesweeper_nn.pth'))  # Load the trained weights
 
     # Load the new evaluation dataset
