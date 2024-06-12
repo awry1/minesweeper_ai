@@ -4,6 +4,7 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 import re
 
+# Creating custom dataset for boards and moves
 class MinesweeperDataset(Dataset):
     def __init__(self, file_path, board_size):
         self.board_size = board_size
@@ -42,7 +43,7 @@ class MinesweeperDataset(Dataset):
         return numeric_board.flatten()
 
     def is_valid_move(self, line):
-        # Regular expression pattern to match a tuple of integers
+        # Checks if pattern matches move coordinates
         pattern = r'^\d+\s+\d+$'
         return bool(re.match(pattern, line.strip()))
 
@@ -55,7 +56,7 @@ class MinesweeperDataset(Dataset):
         move = torch.tensor(move, dtype=torch.long)
         return board, move
 
-# Step 2: Define the Model
+# Defining the Model
 class MinesweeperMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(MinesweeperMLP, self).__init__()
@@ -76,10 +77,9 @@ class MinesweeperMLP(nn.Module):
         x = self.fc6(x)
         return x
 
-# Step 3 & 4: Define Loss Function and Optimizer and create Train Iteration Loop
-# learning_rate=0.001, num_epochs=300, weight_decay=0.00001, batch_size=128, hidden_size = 200
-#
-def train_model(train_loader, input_size, hidden_size, output_size, learning_rate=0.0001, num_epochs=200, weight_decay=0.00001):
+# Defining loss function, optimizer and creating train iteration loop
+# learning_rate=0.001, num_epochs=300, (optional) weight_decay=0.00001, batch_size=128, hidden_size = 200
+def train_model(train_loader, input_size, hidden_size, output_size, learning_rate=0.0001, num_epochs=200):
     model = MinesweeperMLP(input_size, hidden_size, output_size)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -100,11 +100,11 @@ def train_model(train_loader, input_size, hidden_size, output_size, learning_rat
 
 if __name__ == '__main__':
     file_path = 'trainingData.txt'
-    board_size = 10  # Change this to the size of your boards
+    board_size = 10
     dataset = MinesweeperDataset(file_path, board_size)
     train_loader = DataLoader(dataset, batch_size=128, shuffle=True)
 
-    input_size = board_size * board_size  # Example for a 10x10 board
+    input_size = board_size * board_size  # For a 10x10 board
     hidden_size = 200
     output_size = 2  # Move coordinates (row, col)
 
