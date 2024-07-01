@@ -29,7 +29,7 @@ class MinesweeperDataset(Dataset):
                 board = []
                 risk_board = np.zeros((0, 0), dtype=float)  # Reset risk_board
                 continue
-            if line.startswith('Move applied:'):
+            if line.startswith('Moves risk factor:'):
                 input_taken = False
                 continue
 
