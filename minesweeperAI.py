@@ -505,13 +505,13 @@ def torch_gameloop(size, num_mines, seed, model):
             reveal_squares(game_board, player_board, row, col)
             if game_started:
                 return 'W'
-            game_started = True
             #if is_game_finished(game_board, player_board):
             #    return 'W'
+            game_started = True
 
 
 def simulation_torch(size, num_mines, seed, iterations=1000):
-    model = load_model(input_size=(size * size), hidden_size=[600, 400, 200], output_size=(size * size))
+    model = load_model(input_size=(size * size), hidden_size=[1000, 1000], output_size=(size * size))
 
     wins, loses, loses1, undecided = 0, 0, 0, 0
 
