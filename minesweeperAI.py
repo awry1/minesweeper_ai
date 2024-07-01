@@ -506,6 +506,8 @@ def torch_gameloop(size, num_mines, seed, model):
             if game_started:
                 return 'W'
             game_started = True
+            #if is_game_finished(game_board, player_board):
+            #    return 'W'
 
 
 def simulation_torch(size, num_mines, seed, iterations=1000):
