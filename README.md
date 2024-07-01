@@ -1,4 +1,5 @@
 To Do:
+
 0) ~~Write game and train data generation~~ (done)
 1) Ensure >1 square revealed after first move
 2) Fix risk estimation
