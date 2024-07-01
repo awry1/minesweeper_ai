@@ -389,7 +389,7 @@ def ai_gameloop(size, num_mines, seed, filename):
                 return 'W'
 
 
-def simulation_ai(size, num_mines, seed, iterations=1000):
+def simulation_ai(size, num_mines, seed, iterations=5000):
     wins, loses, loses1, undecided = 0, 0, 0, 0
     filename = 'trainingData.txt'
 
@@ -424,7 +424,7 @@ def load_model(input_size, hidden_size, output_size):
 
 def convert_board_to_numerical(player_board):
     # Define mapping from characters to numerical values
-    mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, ' ': 9.0}
+    mapping = {'0': 0.0, '1': 0.1, '2': 0.2, '3': 0.3, '4': 0.4, '5': 0.5, '6': 0.6, '7': 0.7, '8': 0.8, ' ': 0.9}
 
     # Convert characters to numerical values based on the mapping
     numerical_board = [[mapping[cell] if cell in mapping else 0 for cell in row] for row in player_board]
@@ -454,6 +454,8 @@ def torch_take_input(size, game_started, player_board, model):
 
     with torch.no_grad():  # Disable gradient computation during evaluation
             # Convert player_board list to tensor
+            true_risk_board = [[1.0 for _ in range(size)] for _ in range(size)]
+            true_risk_board = choose_least_risky_move(size, player_board, true_risk_board)
             player_board_numerical = convert_board_to_numerical(player_board)
             player_board_tensor = torch.tensor(player_board_numerical, dtype=torch.float32).view(1, size * size)
 
@@ -501,15 +503,13 @@ def torch_gameloop(size, num_mines, seed, model):
 
         else:
             reveal_squares(game_board, player_board, row, col)
-            game_started = True
-            if is_game_finished(game_board, player_board):
-                # print_board(player_board)
-                # print('\nWin')
+            if game_started:
                 return 'W'
+            game_started = True
 
 
 def simulation_torch(size, num_mines, seed, iterations=1000):
-    model = load_model(input_size=(size * size), hidden_size=[400,300,200], output_size=(size * size))
+    model = load_model(input_size=(size * size), hidden_size=[600, 400, 200], output_size=(size * size))
 
     wins, loses, loses1, undecided = 0, 0, 0, 0
 
@@ -535,7 +535,7 @@ if __name__ == '__main__':
     num_mines = 10
     seed = None
 
-    TORCH = False
+    TORCH = True
     AI = True
 
     if TORCH:
