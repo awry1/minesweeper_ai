@@ -56,12 +56,6 @@ class MinesweeperDataset(Dataset):
         return numeric_board.flatten()
 
 
-    def is_valid_move(self, line):
-        # Checks if pattern matches move coordinates
-        pattern = 'Moves risk factor:'
-        return bool(re.match(pattern, line.strip()))
-
-
     def __len__(self):
         return len(self.data)
 
