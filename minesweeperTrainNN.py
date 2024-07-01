@@ -92,8 +92,8 @@ class MinesweeperMLP(nn.Module):
         return x
 
 # Step 3 & 4: Define Loss Function and Optimizer and create Train Iteration Loop
-# best performing NN (01.07.2024 15:27):
-# learning_rate=0.01, num_epochs=50, weight_decay=0.00002, batch_size=4096, hidden_sizes=[600, 400, 200]
+# best performing NN (01.07.2024 15:33) with Loss 5.0:
+# learning_rate=0.01, num_epochs=50, weight_decay=0.000022, batch_size=4096, hidden_sizes=[600, 400, 200]
 def train_model(train_loader, input_size, hidden_sizes, output_size, learning_rate=0.01, num_epochs=50, weight_decay=0.00001):
     model = MinesweeperMLP(input_size, hidden_sizes, output_size)  # Move model to device
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
