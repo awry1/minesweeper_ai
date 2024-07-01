@@ -9,51 +9,56 @@ class MinesweeperDataset(Dataset):
         self.board_size = board_size
         self.data = self.load_data(file_path)
 
+
     def load_data(self, file_path):
         with open(file_path, 'r') as file:
             lines = file.readlines()
+        
+        inputs = []
+        risks = []
 
-        in_boards = []
-        out_boards = []
-        input_taken = True
-        board = []
+        input_board = []
         risk_board = []
-
+        
+        loading_risk = False
         for line in lines:
             line = line.strip()
+
             if len(line) == 0:
-                if board and risk_board:
-                    in_boards.append(self.board_to_numeric(board))
-                    out_boards.append(np.array(risk_board, dtype=float).flatten())
-                input_taken = True
-                board = []
+                loading_risk = False
+                if input_board and risk_board:
+                    inputs.append(self.board_to_numeric(input_board))
+                    risks.append(np.array(risk_board, dtype=float).flatten())
+                input_board = []
                 risk_board = []
                 continue
-            if line.startswith('Moves risk factor:'):
-                input_taken = False
+
+            if line.startswith('Risk factors:'):
+                loading_risk = True
                 continue
 
-            if input_taken:
-                board.append(line.split())
-            else:
+            if loading_risk:
                 risk_board.append([float(val) for val in line.split()])
+            else:
+                input_board.append(line.split())
 
-        # Final append if the last board is not followed by an empty line
-        if board and risk_board:
-            in_boards.append(self.board_to_numeric(board))
-            out_boards.append(np.array(risk_board, dtype=float).flatten())
+        # Final append if file does not end with empty line
+        if input_board and risk_board:
+            inputs.append(self.board_to_numeric(input_board))
+            risks.append(np.array(risk_board, dtype=float).flatten())
 
-        in_boards = np.array(in_boards, dtype=float)
-        out_boards = np.array(out_boards, dtype=float)
+        inputs = np.array(inputs, dtype=float)
+        risks = np.array(risks, dtype=float)
 
         # Normalize input and output data
-        in_boards = in_boards / np.max(in_boards)
-        out_boards = out_boards / np.max(out_boards)
+        inputs = (inputs - np.min(inputs)) / (np.max(inputs) - np.min(inputs))
+        risks = (risks - np.min(risks)) / (np.max(risks) - np.min(risks))
 
-        return list(zip(in_boards, out_boards))
+        return list(zip(inputs, risks))
+    
 
     def board_to_numeric(self, board):
-        mapping = {'0': 0.0, '1': 0.1, '2': 0.2, '3': 0.3, '4': 0.4, '5': 0.5, '6': 0.6, '7': 0.7, '8': 0.8, '?': 0.9}
+        mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0}
         numeric_board = np.zeros((self.board_size, self.board_size), dtype=float)
 
         for i, row in enumerate(board):
@@ -63,14 +68,17 @@ class MinesweeperDataset(Dataset):
 
         return numeric_board.flatten()
 
+
     def __len__(self):
         return len(self.data)
+
 
     def __getitem__(self, idx):
         board, move = self.data[idx]
         board = torch.tensor(board, dtype=torch.float32)
         risk_board = torch.tensor(move, dtype=torch.float32)
         return board, risk_board
+
 
 # Step 2: Define the Model
 class MinesweeperMLP(nn.Module):
@@ -91,14 +99,13 @@ class MinesweeperMLP(nn.Module):
         x = torch.sigmoid(self.output_layer(x))  # Sigmoid to ensure output between 0 and 1
         return x
 
+
 # Step 3 & 4: Define Loss Function and Optimizer and create Train Iteration Loop
-# best performing NN (01.07.2024 16:10) Loss 0.43:
-# learning_rate=0.008, num_epochs=50, weight_decay=0.000025, batch_size=4096, hidden_sizes=[1000, 1000]
-def train_model(train_loader, input_size, hidden_sizes, output_size, learning_rate=0.008, num_epochs=50, weight_decay=0.000025):
+def train_model(train_loader, input_size, output_size, hidden_sizes, learning_rate, num_epochs, weight_decay):
     model = MinesweeperMLP(input_size, hidden_sizes, output_size)  # Move model to device
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
     for epoch in range(num_epochs):
         model.train()
@@ -118,7 +125,20 @@ def train_model(train_loader, input_size, hidden_sizes, output_size, learning_ra
 if __name__ == '__main__':
     file_path = 'trainingData.txt'
     board_size = 10
+    
+    print("Loading Data...")
     dataset = MinesweeperDataset(file_path, board_size)
-    train_loader = DataLoader(dataset, batch_size=4096, shuffle=True)
+    train_loader = DataLoader(
+        dataset,
+        batch_size=8192,
+        shuffle=True)
+    print("Data Loaded")
 
-    train_model(train_loader, input_size=(board_size * board_size), hidden_sizes=[1000, 1000], output_size=(board_size * board_size))
+    train_model(
+        train_loader,
+        input_size=(board_size * board_size),
+        output_size=(board_size * board_size),
+        hidden_sizes=[1000, 1000],
+        learning_rate=0.0005,
+        num_epochs=500,
+        weight_decay=0.000025)

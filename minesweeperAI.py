@@ -1,6 +1,4 @@
 import os
-
-import numpy as np
 import torch
 import random
 from sympy import *
@@ -122,12 +120,12 @@ def gameloop(size, num_mines, seed):
                 quit()
 
 
-########################## AI part starts here ##########################
+########################## Analytical Solve part starts here ##########################
 def find_undiscovered_fields(size, player_board):
     undiscovered = []
     for row in range(size):
         for col in range(size):
-            if not player_board[row][col] == " ":  # or if [row, col] in mines (will this be better?)
+            if not player_board[row][col] == " ":  # or if [row, col] in mines (Will this be better?)
                 continue
             neighbours = find_adjacent_numbers([row, col], size, player_board)
             if len(neighbours) > 0:
@@ -225,59 +223,60 @@ def find_moves_and_mines(solved_matrix, undiscovered):
 
 
 def solve_analytical(size, player_board):
-    undiscovered = find_undiscovered_fields(size, player_board)  # every undiscoverd field with adjacent numbers
-    unique_numbers = []  # list of unique adjacent numbers
+    undiscovered = find_undiscovered_fields(size, player_board)  # Every undiscoverd field with adjacent numbers
+    unique_numbers = []  # List of unique adjacent numbers
     for field in undiscovered:
-        for number_pos in field[1]:  # undiscovered.neighbours
+        for number_pos in field[1]:  # Undiscovered.neighbours
             if number_pos not in unique_numbers:
                 unique_numbers.append(number_pos)
 
-    # create extended matrix to solve and fill last column with adjacent numbers' coordinates
+    # Create extended matrix to solve and fill last column with adjacent numbers' coordinates
     matrix = [[0 for _ in range(len(undiscovered))] for _ in range(len(unique_numbers))]
     for i in range(len(matrix)):
         matrix[i].append(unique_numbers[i])
 
-    # fill matrix with 1 if undiscovered field is adjacent to number
+    # Fill matrix with 1 if undiscovered field is adjacent to number
     for i, x in enumerate(undiscovered):
         for j in range(len(unique_numbers)):
             if matrix[j][len(undiscovered)] in x[1]:
                 matrix[j][i] = 1
 
-    # overwrite last column with values instead of coordinates
+    # Overwrite last column with values instead of coordinates
     for i in range(len(matrix)):
         number_pos = matrix[i][len(undiscovered)]
         matrix[i][len(undiscovered)] = ord(
-            player_board[number_pos[0]][number_pos[1]]) - 48  # convert number from board to int
+            player_board[number_pos[0]][number_pos[1]]) - 48  # Convert number from board to int
 
-    # solve with Gauss elimination
+    # Solve with Gauss elimination
     solved_matrix = solve_gauss(matrix)
 
-    # find moves and mines
+    # Find moves and mines
     moves, mines = find_moves_and_mines(solved_matrix, undiscovered)
 
     return moves, mines
 
-# unchanged
+
 def estimate_risk(player_board, row, col):
     total_unknown = 0
     total_mines = 0
 
-    for i in range(-1, 2):
-        for j in range(-1, 2):
-            x = row + i
-            y = col + j
-            if 0 <= x < len(player_board) and 0 <= y < len(player_board[0]):
-                if player_board[x][y] == ' ':
+    for i in range(row - 1, row + 2):
+        for j in range(col - 1, col + 2):
+            if 0 <= i < len(player_board) and 0 <= j < len(player_board[0]):
+                if player_board[i][j] == ' ':
                     total_unknown += 1
-                elif player_board[x][y] > '0':
-                    total_mines += ord(player_board[x][y]) - 48
+                elif player_board[i][j] > '0':
+                    total_mines += ord(player_board[i][j]) - 48
+            # else:   # If out of bounds
+            #     total_unknown += 1
 
     if total_unknown == 0:
         return 0
     return total_mines / total_unknown
 
-# used to normalize risk to percentage
+
 def find_min_max_risks(size, player_board):
+    # Used to normalize risk values
     min_risk = float('inf')
     max_risk = float('-inf')
 
@@ -292,39 +291,46 @@ def find_min_max_risks(size, player_board):
 
     return min_risk, max_risk
 
-# modified to normalize each risk and save in a
-# risk board - rounded to 2 places
-def choose_least_risky_move(size, player_board, risk_board):
-    min_risk, max_risk = find_min_max_risks(size, player_board)
-    min_normalized_risk = float('inf')
-    best_move = None
-    current_risk_board = risk_board
 
+def find_normalized_risk(player_board, row, col, min_risk, max_risk):
+    risk = estimate_risk(player_board, row, col)
+    if max_risk > min_risk:
+        normalized_risk = (risk - min_risk) / (max_risk - min_risk)
+        normalized_risk = round(normalized_risk, 2)
+        if normalized_risk == 0.0:
+            return 1.0
+        return normalized_risk
+    return 1.0  # If all risks are the same
+
+
+def update_risk_board(size, player_board, risk_board, moves, mines):
+    min_risk, max_risk = find_min_max_risks(size, player_board)
     for row in range(size):
         for col in range(size):
             if player_board[row][col] == ' ':
-                risk = estimate_risk(player_board, row, col)
-
-                # Normalize the risk
-                if max_risk > min_risk:
-                    normalized_risk = (risk - min_risk) / (max_risk - min_risk)
-                    normalized_risk = round(normalized_risk, 2)
-                    if normalized_risk == 0.0:
-                        current_risk_board[row][col] = 1.0
-                    else:
-                        current_risk_board[row][col] = normalized_risk
+                if (row, col) in moves:
+                    risk_board[row][col] = 0.0
+                elif (row, col) in mines:
+                    risk_board[row][col] = 1.0
                 else:
-                    normalized_risk = 1.0  # If all risks are the same
-                    current_risk_board[row][col] = normalized_risk
-
-                if normalized_risk < min_normalized_risk:
-                    min_normalized_risk = normalized_risk
-                    best_move = (row, col)
-
-    return best_move, current_risk_board
+                    risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
+    return risk_board
 
 
-def ai_take_input(size, game_started, player_board):
+def choose_least_risky_move(size, risk_board):
+    min_risk = float('inf')
+    best_move = None
+
+    for row in range(size):
+        for col in range(size):
+            if risk_board[row][col] < min_risk:
+                min_risk = risk_board[row][col]
+                best_move = row, col
+
+    return best_move
+
+
+def take_input_analytical(size, game_started, player_board):
     moves = []
     risk_board = [[1.0 for _ in range(size)] for _ in range(size)]
 
@@ -332,42 +338,40 @@ def ai_take_input(size, game_started, player_board):
         row, col = random.randint(0, size - 1), random.randint(0, size - 1)
     else:
         moves, mines = solve_analytical(size, player_board)
+        risk_board = update_risk_board(size, player_board, risk_board, moves, mines)
+
         if len(moves) > 0:
             row, col = moves[0]
-        # if no definite moves, choose the least risky move
+        # If no definite moves, choose the least risky move
         else:
-            (row, col), risk_board = choose_least_risky_move(size, player_board, risk_board)
+            row, col = choose_least_risky_move(size, risk_board)
 
     # print('\nAI chose:', col, row)
-    return row, col, moves, risk_board
+    return row, col, risk_board
 
 
-def save_game_state(board, moves, risk_board, filename):
+def save_game_state(board, risk_board, filename):
     with open(filename, 'a') as file:
         for row in board:
             row_str = ' '.join(['?' if cell == ' ' else cell for cell in row])
             file.write(row_str + '\n')
 
-        board_copy = [row.copy() for row in risk_board]
-        if len(moves) > 0:
-            for move in moves:
-                board_copy[move[0]][move[1]] = 0.0
+        file.write('Risk factors:\n')
 
-            # Save the modified board state
-        file.write('Moves risk factor:\n')
-        for row in board_copy:
+        for row in risk_board:
             row_str = ' '.join([f'{cell:.2f}' for cell in row])
             file.write(row_str + '\n')
+
         file.write('\n')
 
 
-def ai_gameloop(size, num_mines, seed, filename):
+def gameloop_analytical(size, num_mines, seed, filename):
     game_board, player_board = create_boards(size, num_mines, seed)
     game_started = False
     while True:
         # print_board(player_board)
 
-        row, col, moves, risk_board = ai_take_input(size, game_started, player_board)
+        row, col, risk_board = take_input_analytical(size, game_started, player_board)
 
         if is_mine(game_board, row, col):
             # print_end_board(game_board, player_board)
@@ -380,7 +384,7 @@ def ai_gameloop(size, num_mines, seed, filename):
 
         else:
             if game_started:
-                save_game_state(player_board, moves, risk_board, filename)
+                save_game_state(player_board, risk_board, filename)
             reveal_squares(game_board, player_board, row, col)
             game_started = True
             if is_game_finished(game_board, player_board):
@@ -389,18 +393,18 @@ def ai_gameloop(size, num_mines, seed, filename):
                 return 'W'
 
 
-def simulation_ai(size, num_mines, seed, iterations=5000):
-    wins, loses, loses1, undecided = 0, 0, 0, 0
+def simulation_analytical(size, num_mines, seed, iterations=10000):
     filename = 'trainingData.txt'
 
     if os.path.exists(filename):
         # Remove the file if it exists
         os.remove(filename)
 
+    wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
             print(f"Progress: {_}/{iterations}")
-        result = ai_gameloop(size, num_mines, seed, filename)
+        result = gameloop_analytical(size, num_mines, seed, filename)
         if result == '?':
             undecided += 1
         elif result == 'W':
@@ -422,30 +426,17 @@ def load_model(input_size, hidden_size, output_size):
     return model
 
 
-def convert_board_to_numerical(player_board):
+def convert_board_to_numerical(board):
     # Define mapping from characters to numerical values
-    mapping = {'0': 0.0, '1': 0.1, '2': 0.2, '3': 0.3, '4': 0.4, '5': 0.5, '6': 0.6, '7': 0.7, '8': 0.8, ' ': 0.9}
+    mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, ' ': 9.0}
 
     # Convert characters to numerical values based on the mapping
-    numerical_board = [[mapping[cell] if cell in mapping else 0 for cell in row] for row in player_board]
+    numerical_board = [[mapping[cell] if cell in mapping else 0 for cell in row] for row in board]
 
     return numerical_board
 
 
-def choose_least_risky_move_torch(size, risk_board):
-    best_row, best_col = None, None
-    min_risk = float('inf')
-    for row in range(size):
-        for col in range(size):
-            risk = risk_board[row,col]
-            if risk < min_risk:
-                min_risk = risk
-                best_row = row
-                best_col = col
-
-    return best_row, best_col
-
-def torch_take_input(size, game_started, player_board, model):
+def take_input_torch(size, game_started, player_board, model):
     row, col = None, None
 
     if not game_started:
@@ -454,36 +445,37 @@ def torch_take_input(size, game_started, player_board, model):
 
     with torch.no_grad():  # Disable gradient computation during evaluation
             # Convert player_board list to tensor
-            true_risk_board = [[1.0 for _ in range(size)] for _ in range(size)]
-            true_risk_board = choose_least_risky_move(size, player_board, true_risk_board)
             player_board_numerical = convert_board_to_numerical(player_board)
             player_board_tensor = torch.tensor(player_board_numerical, dtype=torch.float32).view(1, size * size)
 
-            # Assuming tensor_risk_board is a PyTorch tensor with shape (1, 100)
+            # For debugging purposes
+            risk_board = [[1.0 for _ in range(size)] for _ in range(size)]
+            risk_board = update_risk_board(size, player_board, risk_board, [], [])
+
             tensor_risk_board = model(player_board_tensor)
 
             # Convert PyTorch tensor to NumPy array
             numpy_risk_board = tensor_risk_board.cpu().detach().numpy()
 
-            # Reshape the NumPy array to represent the board structure (assuming it's a 10x10 board)
-            size = 10  # Assuming a square board of size 10x10
+            # Reshape the NumPy array to represent the board structure
             reshaped_board = numpy_risk_board.reshape((size, size))
 
-            # Assuming 'choose_least_risky_move_torch' function expects a size and the risk board
-            row, col = choose_least_risky_move_torch(size, reshaped_board)
+            row, col = choose_least_risky_move(size, reshaped_board)
 
     # print('\nAI chose:', col, row)
     return row, col
 
 
-def torch_gameloop(size, num_mines, seed, model):
+def gameloop_torch(size, num_mines, seed, model):
     game_board, player_board = create_boards(size, num_mines, seed)
     last_input = None
     game_started = False
+    move_count = 0
     while True:
         # print_board(player_board)
 
-        row, col = torch_take_input(size, game_started, player_board, model)
+        row, col = take_input_torch(size, game_started, player_board, model)
+        # If working correctly, there should be no need to check if input is valid/last input (?)
         if not is_input_valid(row, col, size):
             # print('\nUndecided')
             return '?'
@@ -502,23 +494,29 @@ def torch_gameloop(size, num_mines, seed, model):
             return 'L'
 
         else:
-            reveal_squares(game_board, player_board, row, col)
-            if game_started:
-                return 'W'
-            #if is_game_finished(game_board, player_board):
-            #    return 'W'
+            move_count += 1
             game_started = True
+            reveal_squares(game_board, player_board, row, col)
+            # Limit the number of moves
+            if move_count >= 3:
+                return 'W'
+            if is_game_finished(game_board, player_board):
+                # print_board(player_board)
+                # print('\nWin')
+                return 'W'
 
 
-def simulation_torch(size, num_mines, seed, iterations=1000):
-    model = load_model(input_size=(size * size), hidden_size=[1000, 1000], output_size=(size * size))
+def simulation_torch(size, num_mines, seed):
+    iterations = 1000
+    hidden_size = [1000, 1000]
+
+    model = load_model(input_size=(size * size), hidden_size=hidden_size, output_size=(size * size))
 
     wins, loses, loses1, undecided = 0, 0, 0, 0
-
     for _ in range(iterations):
         if _ % 100 == 0:
             print(f"Progress: {_}/{iterations}")
-        result = torch_gameloop(size, num_mines, seed, model)
+        result = gameloop_torch(size, num_mines, seed, model)
         if result == '?':
             undecided += 1
         elif result == 'W':
@@ -532,18 +530,22 @@ def simulation_torch(size, num_mines, seed, iterations=1000):
     quit()
 
 
+########################## main starts here ##########################
 if __name__ == '__main__':
     size = 10
     num_mines = 10
     seed = None
 
     TORCH = True
-    AI = True
+    ANALYTICAL = True
 
     if TORCH:
+        # Used to evaluate the model
         simulation_torch(size, num_mines, seed)
     else:
-        if AI:
-            simulation_ai(size, num_mines, seed)
+        if ANALYTICAL:
+            # Used to generate training data
+            simulation_analytical(size, num_mines, seed)
         else:
+            # Play the game manually
             gameloop(size, num_mines, seed)
