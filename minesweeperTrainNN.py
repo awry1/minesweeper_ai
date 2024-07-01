@@ -92,9 +92,9 @@ class MinesweeperMLP(nn.Module):
         return x
 
 # Step 3 & 4: Define Loss Function and Optimizer and create Train Iteration Loop
-# best performing NN (01.07.2024 15:33) with Loss 0.5:
-# learning_rate=0.01, num_epochs=50, weight_decay=0.000022, batch_size=4096, hidden_sizes=[600, 400, 200]
-def train_model(train_loader, input_size, hidden_sizes, output_size, learning_rate=0.01, num_epochs=50, weight_decay=0.00001):
+# best performing NN (01.07.2024 16:10) Loss 0.43:
+# learning_rate=0.008, num_epochs=50, weight_decay=0.000025, batch_size=4096, hidden_sizes=[1000, 1000]
+def train_model(train_loader, input_size, hidden_sizes, output_size, learning_rate=0.008, num_epochs=50, weight_decay=0.000025):
     model = MinesweeperMLP(input_size, hidden_sizes, output_size)  # Move model to device
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -121,4 +121,4 @@ if __name__ == '__main__':
     dataset = MinesweeperDataset(file_path, board_size)
     train_loader = DataLoader(dataset, batch_size=4096, shuffle=True)
 
-    train_model(train_loader, input_size=(board_size * board_size), hidden_sizes=[600, 400, 200], output_size=(board_size * board_size))
+    train_model(train_loader, input_size=(board_size * board_size), hidden_sizes=[1000, 1000], output_size=(board_size * board_size))
