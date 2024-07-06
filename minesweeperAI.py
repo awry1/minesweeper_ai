@@ -4,6 +4,10 @@ import random
 from sympy import *
 from minesweeperTrainNN import MinesweeperMLP
 
+# constants for quick change
+ITERATIONS_TORCH = 1000
+ITERATIONS_AI = 1000
+
 def create_boards(size, num_mines, seed):
     if seed is not None:
         random.seed(seed)
@@ -308,9 +312,9 @@ def update_risk_board(size, player_board, risk_board, moves, mines):
     for row in range(size):
         for col in range(size):
             if player_board[row][col] == ' ':
-                if (row, col) in moves:
+                if [row, col] in moves:
                     risk_board[row][col] = 0.0
-                elif (row, col) in mines:
+                elif [row, col] in mines:
                     risk_board[row][col] = 1.0
                 else:
                     risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
@@ -368,6 +372,7 @@ def save_game_state(board, risk_board, filename):
 def gameloop_analytical(size, num_mines, seed, filename):
     game_board, player_board = create_boards(size, num_mines, seed)
     game_started = False
+    last_move = None
     while True:
         # print_board(player_board)
 
@@ -381,19 +386,21 @@ def gameloop_analytical(size, num_mines, seed, filename):
                 continue
             # print('\nLose')
             return 'L'
-
+        elif last_move == (row, col):
+            return '?'
         else:
             if game_started:
                 save_game_state(player_board, risk_board, filename)
             reveal_squares(game_board, player_board, row, col)
             game_started = True
+            last_move = (row, col)
             if is_game_finished(game_board, player_board):
                 # print_board(player_board)
                 # print('\nWin')
                 return 'W'
 
 
-def simulation_analytical(size, num_mines, seed, iterations=10000):
+def simulation_analytical(size, num_mines, seed, iterations=ITERATIONS_AI):
     filename = 'trainingData.txt'
 
     if os.path.exists(filename):
@@ -436,7 +443,24 @@ def convert_board_to_numerical(board):
     return numerical_board
 
 
-def take_input_torch(size, game_started, player_board, model):
+def save_torch_results(true_risk_board, torch_risk_board, filename):
+    with open(filename, 'a') as file:
+        file.write('True risk factors:\n')
+
+        for row in true_risk_board:
+            row_str = ' '.join([f"{round(cell, 3):.3f}" for cell in row])
+            file.write(row_str + '\n')
+
+        file.write('Torch risk factors:\n')
+
+        for row in torch_risk_board:
+            row_str = ' '.join([f"{round(cell, 3):.3f}" for cell in row])
+            file.write(row_str + '\n')
+
+        file.write('\n')
+
+
+def take_input_torch(size, game_started, player_board, model, filename):
     row, col = None, None
 
     if not game_started:
@@ -459,6 +483,7 @@ def take_input_torch(size, game_started, player_board, model):
 
             # Reshape the NumPy array to represent the board structure
             reshaped_board = numpy_risk_board.reshape((size, size))
+            save_torch_results(risk_board, reshaped_board, filename)
 
             row, col = choose_least_risky_move(size, reshaped_board)
 
@@ -466,15 +491,16 @@ def take_input_torch(size, game_started, player_board, model):
     return row, col
 
 
-def gameloop_torch(size, num_mines, seed, model):
+def gameloop_torch(size, num_mines, seed, model, filename):
     game_board, player_board = create_boards(size, num_mines, seed)
     last_input = None
     game_started = False
     move_count = 0
+
     while True:
         # print_board(player_board)
 
-        row, col = take_input_torch(size, game_started, player_board, model)
+        row, col = take_input_torch(size, game_started, player_board, model, filename)
         # If working correctly, there should be no need to check if input is valid/last input (?)
         if not is_input_valid(row, col, size):
             # print('\nUndecided')
@@ -494,29 +520,33 @@ def gameloop_torch(size, num_mines, seed, model):
             return 'L'
 
         else:
-            move_count += 1
-            game_started = True
             reveal_squares(game_board, player_board, row, col)
             # Limit the number of moves
-            if move_count >= 3:
+            if move_count >= 1 and game_started:
                 return 'W'
             if is_game_finished(game_board, player_board):
                 # print_board(player_board)
                 # print('\nWin')
                 return 'W'
+            move_count += 1
+            game_started = True
 
 
 def simulation_torch(size, num_mines, seed):
-    iterations = 1000
     hidden_size = [1000, 1000]
 
     model = load_model(input_size=(size * size), hidden_size=hidden_size, output_size=(size * size))
 
+    filename = 'torch_results.txt'
+    if os.path.exists(filename):
+        # Remove the file if it exists
+        os.remove(filename)
+
     wins, loses, loses1, undecided = 0, 0, 0, 0
-    for _ in range(iterations):
+    for _ in range(ITERATIONS_TORCH):
         if _ % 100 == 0:
-            print(f"Progress: {_}/{iterations}")
-        result = gameloop_torch(size, num_mines, seed, model)
+            print(f"Progress: {_}/{ITERATIONS_TORCH}")
+        result = gameloop_torch(size, num_mines, seed, model, filename)
         if result == '?':
             undecided += 1
         elif result == 'W':

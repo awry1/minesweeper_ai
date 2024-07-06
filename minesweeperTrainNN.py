@@ -134,11 +134,19 @@ if __name__ == '__main__':
         shuffle=True)
     print("Data Loaded")
 
+# batch_size=8192,
+# input_size=(board_size * board_size),
+# output_size=(board_size * board_size),
+# hidden_sizes=[1000, 1000],
+# learning_rate=0.0005,
+# num_epochs=100,
+# weight_decay=0.000025)
+
     train_model(
         train_loader,
         input_size=(board_size * board_size),
         output_size=(board_size * board_size),
         hidden_sizes=[1000, 1000],
         learning_rate=0.0005,
-        num_epochs=500,
+        num_epochs=200,
         weight_decay=0.000025)
