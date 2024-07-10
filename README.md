@@ -2,6 +2,6 @@ To Do:
 
 0) ~~Write game and train data generation~~ (done)
 1) ~~Ensure >1 square revealed after first move~~ (done)
-2) ~~Fix risk estimation~~ (done?)
-3) Rewrite analytical and pytorch solution so it returns list of moves (and uses them if undecided)
+2) ENCHANCE risk estimation
+3) Rewrite analytical and pytorch solution so it returns list of moves (and uses them if undecided) (do we need that?)
 4) Train NN till satisfaction
