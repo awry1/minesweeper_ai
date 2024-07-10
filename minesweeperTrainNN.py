@@ -107,6 +107,22 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
+    # Run till good
+    """ running_loss = 1.0
+    while running_loss > 0.01:
+        model.train()
+        running_loss = 0.0
+        for boards, risk_boards in train_loader:
+            optimizer.zero_grad()
+            outputs = model(boards)
+            loss = criterion(outputs, risk_boards)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        scheduler.step()
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}") """
+
+    # Run for a fixed number of epochs
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -124,7 +140,7 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
 
 if __name__ == '__main__':
     file_path = 'trainingData.txt'
-    board_size = 10
+    board_size = 4
     
     print("Loading Data...")
     dataset = MinesweeperDataset(file_path, board_size)
@@ -146,7 +162,7 @@ if __name__ == '__main__':
         train_loader,
         input_size=(board_size * board_size),
         output_size=(board_size * board_size),
-        hidden_sizes=[1000, 1000],
+        hidden_sizes=[64],
         learning_rate=0.00005,
         num_epochs=100,
         weight_decay=0.000025)

@@ -8,6 +8,19 @@ from minesweeperTrainNN import MinesweeperMLP
 ITERATIONS_TORCH = 1000
 ITERATIONS_ANALYTICAL = 1000
 
+def random_num_mines(do_rand, seed):
+    if not do_rand:
+        return 10   # Default number of mines
+    
+    if seed is not None:
+        random.seed(seed)
+    
+    # Max 8, optimized for 4x4 board
+    if random.randint(0, 10) < 9:   # 90% chance for less mines
+        return random.randint(0, 4)
+    return random.randint(4, 8)     # 10% chance for more mines
+
+
 def create_boards(size, num_mines, seed):
     if seed is not None:
         random.seed(seed)
@@ -56,16 +69,26 @@ def is_input_valid(row, col, size):
     return False
 
 
-def ensure_fair_start(size, game_board, row, col):
+def ensure_fair_start(size, num_mines, game_board, row, col):
+    max_mines = 2   # Maximum mines in the 3x3 area around the first move
     was_mine = True
     while(was_mine):
         was_mine = False
+
+        if game_board[row][col] == 'X':
+            game_board, player_board = create_boards(size, num_mines, None)
+            was_mine = True
+            continue
+        
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
                 if not was_mine and 0 <= i < len(game_board) and 0 <= j < len(game_board[0]):
                     if game_board[i][j] == 'X':
+                        max_mines -= 1
+                    if max_mines == 0:
                         game_board, player_board = create_boards(size, num_mines, None)
                         was_mine = True
+                        continue
 
     return game_board
 
@@ -127,7 +150,7 @@ def gameloop(size, num_mines, seed):
             continue
 
         if not game_started:
-            game_board = ensure_fair_start(size, game_board, row, col)
+            game_board = ensure_fair_start(size, num_mines, game_board, row, col)
             game_started = True
         
         if is_mine(game_board, row, col):
@@ -408,7 +431,7 @@ def gameloop_analytical(size, num_mines, seed, filename):
         row, col, risk_board = take_input_analytical(size, num_mines, game_started, player_board)
 
         if not game_started:
-            game_board = ensure_fair_start(size, game_board, row, col)
+            game_board = ensure_fair_start(size, num_mines, game_board, row, col)
 
         if is_mine(game_board, row, col):
             # print_end_board(game_board, player_board)
@@ -545,7 +568,7 @@ def gameloop_torch(size, num_mines, seed, model, filename):
             return '?'
         
         if not game_started:
-            game_board = ensure_fair_start(size, game_board, row, col)
+            game_board = ensure_fair_start(size, num_mines, game_board, row, col)
         
         last_input = (row, col)
 
@@ -572,7 +595,7 @@ def gameloop_torch(size, num_mines, seed, model, filename):
 
 
 def simulation_torch(size, num_mines, seed):
-    hidden_size = [1000, 1000]
+    hidden_size = [64]
 
     model = load_model(input_size=(size * size), hidden_size=hidden_size, output_size=(size * size))
 
@@ -601,11 +624,11 @@ def simulation_torch(size, num_mines, seed):
 
 ########################## Main starts here ##########################
 if __name__ == '__main__':
-    size = 10
-    num_mines = 10
+    size = 4
     seed = None
+    num_mines = random_num_mines(True, seed)
 
-    TORCH = True
+    TORCH = False
     ANALYTICAL = True
 
     if TORCH:
@@ -621,12 +644,12 @@ if __name__ == '__main__':
 
 
 ########################## Debug functions ##########################
-def test_safe_start(size, num_mines, seed):
+def test_safe_start(size, num_mines, seed): # Untested if works after updates
     one_zero = 0
     for _ in range(1000):
         game_board, player_board = create_boards(size, num_mines, seed)
         row, col, risk_board = take_input_analytical(size, num_mines, False, player_board)
-        game_board = ensure_fair_start(size, game_board, row, col)
+        game_board = ensure_fair_start(size, num_mines, game_board, row, col)
         if is_mine(game_board, row, col):
             print('Mine found on first move')
             break
