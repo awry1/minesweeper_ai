@@ -164,5 +164,5 @@ if __name__ == '__main__':
         output_size=(board_size * board_size),
         hidden_sizes=[64],
         learning_rate=0.00005,
-        num_epochs=100,
+        num_epochs=500,
         weight_decay=0.000025)
