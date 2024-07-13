@@ -1,11 +1,9 @@
 import os
-import sys
 
 import torch
 import random
 from sympy import *
 from minesweeperTrainNN import MinesweeperMLP
-from torchsummary import summary as torch_summary
 
 # Constants for quick change
 TORCH = True
