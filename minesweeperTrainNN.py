@@ -1,7 +1,20 @@
+import datetime
+import os
+
 import numpy as np
 import torch
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
+
+ITERATIONS_ANALYTICAL = 1000
+SIZE = 4
+MODEL_NAME = 'NN'
+TRAIN_NAME = 'DATA'
+RESULTS_NAME = 'RESULT'
+MODEL_DIRECTORY = 'torchModels'
+TRAIN_DIRECTORY = 'trainData'
+RESULTS_DIRECTORY = 'trainResults'
+
 
 # Creating custom dataset for boards and moves
 class MinesweeperDataset(Dataset):
@@ -13,13 +26,13 @@ class MinesweeperDataset(Dataset):
     def load_data(self, file_path):
         with open(file_path, 'r') as file:
             lines = file.readlines()
-        
+
         inputs = []
         risks = []
 
         input_board = []
         risk_board = []
-        
+
         loading_risk = False
         for line in lines:
             line = line.strip()
@@ -55,7 +68,7 @@ class MinesweeperDataset(Dataset):
         risks = (risks - np.min(risks)) / (np.max(risks) - np.min(risks))
 
         return list(zip(inputs, risks))
-    
+
 
     def board_to_numeric(self, board):
         mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0}
@@ -122,6 +135,12 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
         scheduler.step()
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}") """
 
+    FILENAME = os.path.join(RESULTS_DIRECTORY, f"{RESULTS_NAME}_s-{SIZE}_e-{num_epochs}_hs-{hidden_sizes}_"
+                                               f"lr-{learning_rate}_wd-{weight_decay}.pth")
+    if os.path.exists(FILENAME):
+        # Remove the file if it exists
+        os.remove(FILENAME)
+
     # Run for a fixed number of epochs
     for epoch in range(num_epochs):
         model.train()
@@ -135,34 +154,37 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
             running_loss += loss.item()
         scheduler.step()
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}")
+        with open(FILENAME, 'a') as file:
+            file.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}\n")
 
-    torch.save(model.state_dict(), 'minesweeper_nn.pth')
+    FILENAME = os.path.join(MODEL_DIRECTORY, f"{MODEL_NAME}_{SIZE}.pth")
+
+    torch.save(model.state_dict(), FILENAME)
 
 if __name__ == '__main__':
-    file_path = 'trainingData.txt'
-    board_size = 4
-    
+    FILENAME = os.path.join(TRAIN_DIRECTORY, f"{TRAIN_NAME}_{SIZE}_{ITERATIONS_ANALYTICAL}.txt")
+
     print("Loading Data...")
-    dataset = MinesweeperDataset(file_path, board_size)
+    dataset = MinesweeperDataset(FILENAME, SIZE)
     train_loader = DataLoader(
         dataset,
         batch_size=8192,
         shuffle=True)
     print("Data Loaded")
 
-# batch_size=8192,
-# input_size=(board_size * board_size),
-# output_size=(board_size * board_size),
-# hidden_sizes=[1000, 1000],
-# learning_rate=0.00005,
-# num_epochs=100,
-# weight_decay=0.000025)
+    # batch_size=8192,
+    # input_size=(board_size * board_size),
+    # output_size=(board_size * board_size),
+    # hidden_sizes=[1000, 1000],
+    # learning_rate=0.00005,
+    # num_epochs=100,
+    # weight_decay=0.000025)
 
     train_model(
         train_loader,
-        input_size=(board_size * board_size),
-        output_size=(board_size * board_size),
+        input_size=(SIZE * SIZE),
+        output_size=(SIZE * SIZE),
         hidden_sizes=[64],
         learning_rate=0.00005,
-        num_epochs=500,
+        num_epochs=100,
         weight_decay=0.000025)
