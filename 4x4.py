@@ -6,8 +6,7 @@ import random
 from sympy import *
 from numpy import *
 
-from minesweeperAI import is_game_finished, reveal_squares, create_boards, ensure_fair_start, is_mine, solve_analytical, \
-    update_risk_board, choose_least_risky_move, solve_gauss, find_moves_and_mines
+from minesweeperAI import *
 
 TORCH = False
 ANALYTICAL = True

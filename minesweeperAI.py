@@ -203,7 +203,7 @@ def find_undiscovered_fields(SIZE, player_board):
                 continue
             neighbours = find_adjacent_numbers(row, col, SIZE, player_board)
             if len(neighbours) > 0:
-                undiscovered.append([[row, col], neighbours])
+                undiscovered.append([(row, col), neighbours])
     return undiscovered
 
 
