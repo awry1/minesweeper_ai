@@ -6,7 +6,7 @@ from sympy import *
 from minesweeperTrainNN import MinesweeperMLP
 
 # Constants for quick change
-TORCH = True
+TORCH = False
 ANALYTICAL = True
 ITERATIONS_TORCH = 1000
 ITERATIONS_ANALYTICAL = 1000
@@ -270,7 +270,10 @@ def find_moves_and_mines(solved_matrix, undiscovered):
     m = len(solved_matrix[0])
 
     # Represent undiscovered fields as symbols from x0 to x(m-1)
-    hidden_fields = symbols(" ".join(f"x{x}" for x in range(m - 1)), real=True)
+    if m == 2:
+        hidden_fields = [symbols(f"x0", real=True)]
+    else:
+        hidden_fields = symbols(" ".join(f"x{x}" for x in range(m - 1)), real=True)
 
     # Create the coefficient matrix (A) and the result vector (b)
     A = Matrix([[solved_matrix[i][j] for j in range(m - 1)] for i in range(n)])
@@ -390,13 +393,16 @@ def update_risk_board(SIZE, num_mines, player_board, risk_board, moves, mines):
     for row in range(SIZE):
         for col in range(SIZE):
             if player_board[row][col] == ' ':
-                if [row, col] in moves:
+                if (row, col) in moves:
                     risk_board[row][col] = 0.0
                 # Already 1.0 on the board, no need to update
                 # elif [row, col] in mines:
                 #     risk_board[row][col] = 1.0
                 else:
-                    risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
+                    if (row, col) in mines:
+                        risk_board[row][col] = 1.0
+                    else:
+                        risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
     return risk_board
 
 
@@ -665,13 +671,11 @@ def simulation_torch(SIZE, DEFAULT_MINES, SEED):
         file.write(existing_content)
     quit()
 
-
 ########################## Main starts here ##########################
 if __name__ == '__main__':
-    SIZE = 4
+    SIZE = 12
     DEFAULT_MINES = 10
     SEED = None
-
     if TORCH:
         # Used to evaluate the model
         simulation_torch(SIZE, DEFAULT_MINES, SEED)

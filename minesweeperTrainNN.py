@@ -6,7 +6,7 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 
 ITERATIONS_ANALYTICAL = 1000
-SIZE = 4
+SIZE = 12
 MODEL_NAME = 'NN'
 TRAIN_NAME = 'DATA'
 RESULTS_NAME = 'RESULT'
