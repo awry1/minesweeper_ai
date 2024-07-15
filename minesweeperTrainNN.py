@@ -1,18 +1,21 @@
 import os
-
-import numpy as np
 import torch
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
+import numpy as np
+
+# Constants for quick change
+SIZE = 4
 
 ITERATIONS_ANALYTICAL = 1000
-SIZE = 12
-MODEL_NAME = 'NN'
-TRAIN_NAME = 'DATA'
-RESULTS_NAME = 'RESULT'
-MODEL_DIRECTORY = 'torchModels'
-TRAIN_DIRECTORY = 'trainData'
-RESULTS_DIRECTORY = 'trainResults'
+
+MODEL_NAME = 'Model'
+TRAIN_NAME = 'Data'
+RESULTS_NAME = 'TrainResult'
+
+MODEL_DIRECTORY = 'MODELS'
+TRAIN_DIRECTORY = 'DATA'
+RESULTS_DIRECTORY = 'RESULTS_TRAIN'
 
 
 # Creating custom dataset for boards and moves
@@ -119,23 +122,9 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
-    # Run till good
-    """ running_loss = 1.0
-    while running_loss > 0.01:
-        model.train()
-        running_loss = 0.0
-        for boards, risk_boards in train_loader:
-            optimizer.zero_grad()
-            outputs = model(boards)
-            loss = criterion(outputs, risk_boards)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        scheduler.step()
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}") """
-
-    FILENAME = os.path.join(RESULTS_DIRECTORY, f"{RESULTS_NAME}_s-{SIZE}_e-{num_epochs}_hs-{hidden_sizes}_"
-                                               f"lr-{learning_rate}_wd-{weight_decay}.pth")
+    os.makedirs(RESULTS_DIRECTORY, exist_ok=True)
+    FILENAME = os.path.join(RESULTS_DIRECTORY, f'{RESULTS_NAME}_s-{SIZE}_e-{num_epochs}_hs-{hidden_sizes}_'
+                                               f'lr-{learning_rate}_wd-{weight_decay}.pth')
     if os.path.exists(FILENAME):
         # Remove the file if it exists
         os.remove(FILENAME)
@@ -152,24 +141,40 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
             optimizer.step()
             running_loss += loss.item()
         scheduler.step()
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}")
+        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}')
         with open(FILENAME, 'a') as file:
-            file.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}\n")
+            file.write(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}\n')
 
-    FILENAME = os.path.join(MODEL_DIRECTORY, f"{MODEL_NAME}_{SIZE}.pth")
+    # Run till good
+    """ running_loss = 1.0
+    while running_loss > 0.01:
+        model.train()
+        running_loss = 0.0
+        for boards, risk_boards in train_loader:
+            optimizer.zero_grad()
+            outputs = model(boards)
+            loss = criterion(outputs, risk_boards)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        scheduler.step()
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}") """
+    
+    os.makedirs(MODEL_DIRECTORY, exist_ok=True)
+    FILENAME = os.path.join(MODEL_DIRECTORY, f'{MODEL_NAME}_{SIZE}.pth')
 
     torch.save(model.state_dict(), FILENAME)
 
 if __name__ == '__main__':
-    FILENAME = os.path.join(TRAIN_DIRECTORY, f"{TRAIN_NAME}_{SIZE}_{ITERATIONS_ANALYTICAL}.txt")
+    FILENAME = os.path.join(TRAIN_DIRECTORY, f'{TRAIN_NAME}_{SIZE}_{ITERATIONS_ANALYTICAL}.txt')
 
-    print("Loading Data...")
+    print('Loading Data...')
     dataset = MinesweeperDataset(FILENAME, SIZE)
     train_loader = DataLoader(
         dataset,
         batch_size=8192,
         shuffle=True)
-    print("Data Loaded")
+    print('Data Loaded')
 
     # batch_size=8192,
     # input_size=(board_size * board_size),
