@@ -1,7 +1,7 @@
 To Do:
-1) ~~Create matrix to solve~~ (done)
-2) ~~Gauss solve the matrix~~ (done)
-3) ~~Find all possible moves (and mines)~~ (done?)
-4) ~~Choose best move~~ (kinda done)
-5) ~~Generate data for AI model to learn from~~ (done)
-6) ~~Write AI model using pytorch~~ (but works very badly)
+
+0) ~~Write game and train data generation~~ (done)
+1) ~~Ensure >1 square revealed after first move~~ (done)
+2) Upgrade risk estimation
+3) Rewrite analytical and pytorch solution so it returns list of moves (and uses them if undecided)
+4) Train NN till satisfaction
