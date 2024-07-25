@@ -18,7 +18,7 @@ def create_boards(size, num_mines):
     mines = random.sample(range(size_x * size_y), num_mines)
     for i in mines:
         row = i // size_x
-        col = i % size_y
+        col = i % size_x
         game_board[row][col] = 'X'
 
     for row in range(size_y):
