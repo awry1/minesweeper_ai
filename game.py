@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
 
 # Old code
-def create_boards(size, num_mines):
+""" def create_boards(size, num_mines):
     size_x, size_y = size
     game_board = [[' ' for _ in range(size_x)] for _ in range(size_y)]
     player_board = [[' ' for _ in range(size_x)] for _ in range(size_y)]
@@ -178,10 +178,10 @@ def create_boards(size, num_mines):
         col = i % size_y
         game_board[row][col] = 'X'
 
-    return game_board, player_board
+    return game_board, player_board """
 
 
-def reveal_squares(game_board, player_board, row, col):
+""" def reveal_squares(game_board, player_board, row, col):
     if player_board[row][col] != ' ':
         return
     # Not possible to enter function if mine
@@ -192,4 +192,4 @@ def reveal_squares(game_board, player_board, row, col):
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
                 if 0 <= i < len(game_board) and 0 <= j < len(game_board[0]):
-                    reveal_squares(game_board, player_board, i, j)
+                    reveal_squares(game_board, player_board, i, j) """

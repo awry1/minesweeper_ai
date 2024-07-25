@@ -34,7 +34,7 @@ def find_adjacent_numbers(player_board, row, col):
 
 
 def solve_gauss(matrix):
-    n = len(matrix) # Number of rows in the matrix
+    n = len(matrix)     # Number of rows in the matrix
     m = len(matrix[0])  # Number of columns in the matrix
 
     for i in range(min(n, m - 1)):  # Ensure we do not exceed the number of columns
@@ -147,64 +147,6 @@ def solve_analytical(player_board):
     return moves, mines
 
 
-def estimate_risk(player_board, row, col):
-    # Find all adjacent numbers and store them in list
-    numbers = find_adjacent_numbers(player_board, row, col)
-
-    # For every number in list find number of adjacent hidden fields
-    # Calculate subrisk and store it in list (subrisk = value / hidden_fields)
-    risks = []
-    for number in numbers:
-        row, col = number
-        hidden_fields = 0
-        for i in range(row - 1, row + 2):
-            for j in range(col - 1, col + 2):
-                if 0 <= i < len(player_board) and 0 <= j < len(player_board[0]):
-                    if player_board[i][j] == ' ':
-                        hidden_fields += 1
-        # # If somehow the number is not adjacent EVEN TO THE GIVEN FIELD
-        # if hidden_fields == 0:
-        #     risk.append(0)
-        #     continue
-        value = ord(player_board[row][col]) - 48
-        risks.append((value / hidden_fields))
-
-    # Estimated risk is sum of every subrisk calculated above
-    risk = 0
-    for subrisk in risks:
-        risk += subrisk
-    return risk
-
-
-def find_min_max_risks(player_board):
-    # Used to normalize risk values
-    min_risk = float('inf')
-    max_risk = float('-inf')
-
-    for row in range(len(player_board)):
-        for col in range(len(player_board[0])):
-            if player_board[row][col] == ' ':
-                risk = estimate_risk(player_board, row, col)
-                if risk < min_risk:
-                    min_risk = risk
-                if risk > max_risk:
-                    max_risk = risk
-
-    return min_risk, max_risk
-
-
-def find_normalized_risk(player_board, row, col, min_risk, max_risk):
-    risk = estimate_risk(player_board, row, col)
-    if risk == 0.0:
-        return 1.0
-
-    if max_risk > min_risk:
-        normalized_risk = (risk - min_risk) / (max_risk - min_risk)
-        normalized_risk = round(normalized_risk, 2)
-        return normalized_risk
-    return 1.0  # If all risks are the same
-
-
 def update_risk_board(num_mines, player_board, risk_board, moves, mines):
     # # Don't know if works as intended
     # if len(mines) == num_mines:
@@ -214,25 +156,6 @@ def update_risk_board(num_mines, player_board, risk_board, moves, mines):
     #                 risk_board[row][col] = 0.0
     #     return risk_board
 
-    min_risk, max_risk = find_min_max_risks(player_board)
-    for row in range(len(player_board)):
-        for col in range(len(player_board[0])):
-            if player_board[row][col] == ' ':
-                if (row, col) in moves:
-                    risk_board[row][col] = 0.0
-                # # Already 1.0 on the board, no need to update
-                # elif (row, col) in mines:
-                #     risk_board[row][col] = 1.0
-                else:
-                    if (row, col) in mines:
-                        risk_board[row][col] = 1.0
-                    else:
-                        risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
-    return risk_board
-
-
-def update_risk_board2(player_board, risk_board, moves, mines):
-    # UNTESTED!!!
     # Find all numbers on the board
     numbers = []
     for row in range(len(player_board)):
@@ -240,7 +163,7 @@ def update_risk_board2(player_board, risk_board, moves, mines):
             if player_board[row][col] > '0':
                 numbers.append((row, col))
     
-    # For every number in list find number of neighbouring hidden fields
+    # For every number in list find number of adjacent hidden fields
     # Calculate subrisk and store it in list (subrisk = value / hidden_fields)
     risks = []
     for number in numbers:
@@ -255,14 +178,14 @@ def update_risk_board2(player_board, risk_board, moves, mines):
         if hidden_fields > 0:
             risks.append(((row, col), (value / hidden_fields)))
         
-    # For every hidden field calculate risk based on neighbouring numbers
+    # For every hidden field calculate risk based on adjacent numbers
     for number, subrisk in risks:
         row, col = number
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
                 if 0 <= i < len(player_board) and 0 <= j < len(player_board[0]):
                     if player_board[i][j] == ' ':
-                        risk_board[i][j] -= subrisk
+                        risk_board[i][j] += subrisk
     
     # Fix the risk values and fill in the moves
     for row in range(len(player_board)):
@@ -275,9 +198,8 @@ def update_risk_board2(player_board, risk_board, moves, mines):
                 # if (row, col) in mines:
                 #     risk_board[row][col] = 1.0
                 #     continue
-                if risk_board[row][col] != 1.0:
+                if risk_board[row][col] != 1.0:     # and risk_board[row][col] != 0.0
                     risk_board[row][col] -= 1.0
-                    risk_board[row][col] *= -1.0
     
     # Normalize the risk values
     min_risk = min([min(row) for row in risk_board])
@@ -399,3 +321,87 @@ if __name__ == '__main__':
     os.makedirs('DATA', exist_ok=True)
     FILENAME = os.path.join('DATA', f'Data_{SIZE}_{ITERATIONS}.txt')
     simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, SEED, ITERATIONS)
+
+
+# Old code
+""" def update_risk_board(num_mines, player_board, risk_board, moves, mines):
+    # # Don't know if works as intended
+
+    # if len(mines) == num_mines:
+    #     for row in range(len(player_board)):
+    #         for col in range(len(player_board[0])):
+    #             if player_board[row][col] == ' ' and (row, col) not in mines:
+    #                 risk_board[row][col] = 0.0
+    #     return risk_board
+
+    min_risk, max_risk = find_min_max_risks(player_board)
+    for row in range(len(player_board)):
+        for col in range(len(player_board[0])):
+            if player_board[row][col] == ' ':
+                if (row, col) in moves:
+                    risk_board[row][col] = 0.0
+                    continue
+                # # Already 1.0 on the board, no need to update
+                # if (row, col) in mines:
+                #     risk_board[row][col] = 1.0
+                #     continue
+                risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
+    return risk_board """
+
+
+""" def find_min_max_risks(player_board):
+    # Used to normalize risk values
+    min_risk = float('inf')
+    max_risk = float('-inf')
+
+    for row in range(len(player_board)):
+        for col in range(len(player_board[0])):
+            if player_board[row][col] == ' ':
+                risk = estimate_risk(player_board, row, col)
+                if risk < min_risk:
+                    min_risk = risk
+                if risk > max_risk:
+                    max_risk = risk
+
+    return min_risk, max_risk """
+
+
+""" def estimate_risk(player_board, row, col):
+    # Find all adjacent numbers and store them in list
+    numbers = find_adjacent_numbers(player_board, row, col)
+
+    # For every number in list find number of adjacent hidden fields
+    # Calculate subrisk and store it in list (subrisk = value / hidden_fields)
+    risks = []
+    for number in numbers:
+        row, col = number
+        hidden_fields = 0
+        for i in range(row - 1, row + 2):
+            for j in range(col - 1, col + 2):
+                if 0 <= i < len(player_board) and 0 <= j < len(player_board[0]):
+                    if player_board[i][j] == ' ':
+                        hidden_fields += 1
+        # # If somehow the number is not adjacent EVEN TO THE GIVEN FIELD
+        # if hidden_fields == 0:
+        #     risk.append(0)
+        #     continue
+        value = ord(player_board[row][col]) - 48
+        risks.append((value / hidden_fields))
+
+    # Estimated risk is sum of every subrisk calculated above
+    risk = 0
+    for subrisk in risks:
+        risk += subrisk
+    return risk """
+
+
+""" def find_normalized_risk(player_board, row, col, min_risk, max_risk):
+    risk = estimate_risk(player_board, row, col)
+    if risk == 0.0:
+        return 1.0
+
+    if max_risk > min_risk:
+        normalized_risk = (risk - min_risk) / (max_risk - min_risk)
+        normalized_risk = round(normalized_risk, 2)
+        return normalized_risk
+    return 1.0  # If all risks are the same """
