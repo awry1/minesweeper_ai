@@ -95,9 +95,9 @@ def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, mov
     last_input = None
     game_started = False
     while True:
-        risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
-        risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
-        true_row, true_col = choose_least_risky_move(risk_board)
+        #risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
+        #risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
+        #true_row, true_col = choose_least_risky_move(risk_board)
 
         row, col = take_input_torch(size, num_mines, player_board, game_started, model, filename)
         
@@ -109,20 +109,20 @@ def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, mov
 
         last_input = row, col
 
-        if game_started:
-            if true_row != row or true_col != col or is_mine(game_board, row, col):
-                if not game_started:
-                    return 'L1'
-                return 'L'
-
+        #  true_row != row or true_col != col
+        if is_mine(game_board, row, col):
+            if not game_started:
+                return 'L1'
+            return 'L'
         else:
             if game_started:
                 moves_limit -= 1
                 if moves_limit == 0:
                     return 'W'
-            game_started = True
-
+            else:
+                game_started = True
             reveal_squares(game_board, player_board, row, col)
+
             if is_game_finished(game_board, player_board):
                 return 'W'
 
