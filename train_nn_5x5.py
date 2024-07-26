@@ -1,7 +1,7 @@
 from train_nn import *
 
 # Constants for quick change
-SIZE = 10, 10     # X, Y
+SIZE = 10, 10  # X, Y
 WINDOW_SIZE = 5, 5
 
 ITERATIONS = 100  # Iterations in the data file
@@ -136,6 +136,12 @@ if __name__ == '__main__':
         input_size=(size_x * size_y),
         output_size=(1),
         hidden_sizes=[64],
-        learning_rate=0.00005,
-        num_epochs=400,
-        weight_decay=0.000025)
+        learning_rate=0.005,
+        num_epochs=300,
+        weight_decay=0.00025)
+
+    # best:
+    # hidden_sizes=[64],
+    # learning_rate=0.005,
+    # num_epochs=300,
+    # weight_decay=0.00025

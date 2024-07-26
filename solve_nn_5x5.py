@@ -23,7 +23,6 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, model, fil
         return row, col
 
     with torch.no_grad():  # Disable gradient computation during evaluation
-        # Convert player_board list to tensor
         undiscovered = find_undiscovered_fields(player_board)
         torch_risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
         for field, _ in undiscovered:

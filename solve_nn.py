@@ -82,6 +82,8 @@ def save_torch_results(true_risk_board, torch_risk_board, filename):
             row_str = ' '.join([f'{round(cell, 3):.3f}' for cell in row])
             file.write(row_str + '\n')
 
+        file.write('\n')
+
 
 def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, moves_limit):
     size_x, size_y = size

@@ -1,5 +1,5 @@
 from solve_analytical import *
-ITERATIONS = 500
+ITERATIONS = 1000
 
 
 def create_window(player_board, field):
