@@ -13,7 +13,7 @@ ITERATIONS = 1000   # Iterations in the data file
 # Creating custom dataset for boards and moves
 class MinesweeperDataset(Dataset):
     def __init__(self, file_path, board_size):
-        self.board_size = board_size
+        self.size_x, self.size_y = board_size
         self.data = self.load_data(file_path)
 
 
@@ -23,7 +23,6 @@ class MinesweeperDataset(Dataset):
 
         inputs = []
         risks = []
-        mines = []
 
         input_board = []
         risk_board = []
@@ -39,10 +38,6 @@ class MinesweeperDataset(Dataset):
                     risks.append(np.array(risk_board, dtype=float).flatten())
                 input_board = []
                 risk_board = []
-                continue
-
-            if line.startswith('Number of mines:'):
-                loading_mines = True
                 continue
 
             if line.startswith('Risk factors:'):
@@ -68,22 +63,19 @@ class MinesweeperDataset(Dataset):
 
         return list(zip(inputs, risks))
 
-
     def board_to_numeric(self, board):
         mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0}
-        numeric_board = np.zeros((self.board_size, self.board_size), dtype=float)
+        numeric_board = np.zeros((self.size_x, self.size_y), dtype=float)
 
         for i, row in enumerate(board):
             for j, cell in enumerate(row):
-                if i < self.board_size and j < self.board_size:
+                if i < self.size_x and j < self.size_y:
                     numeric_board[i][j] = mapping.get(cell, 0)
 
         return numeric_board.flatten()
 
-
     def __len__(self):
         return len(self.data)
-
 
     def __getitem__(self, idx):
         board, move = self.data[idx]
@@ -147,21 +139,6 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
         with open(FILENAME, 'a') as file:
             file.write(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}\n')
 
-    # Run till good
-    """ running_loss = 1.0
-    while running_loss > 0.01:
-        model.train()
-        running_loss = 0.0
-        for boards, risk_boards in train_loader:
-            optimizer.zero_grad()
-            outputs = model(boards)
-            loss = criterion(outputs, risk_boards)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        scheduler.step()
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}") """
-    
     os.makedirs('MODELS', exist_ok=True)
     FILENAME = os.path.join('MODELS', f'Model_{SIZE}.pth')
 
@@ -173,7 +150,7 @@ if __name__ == '__main__':
 
     print('Using data file:', FILENAME)
     print('Loading Data...')
-    dataset = MinesweeperDataset(FILENAME, 5)
+    dataset = MinesweeperDataset(FILENAME, SIZE)
     train_loader = DataLoader(
         dataset,
         batch_size=8192,
@@ -185,7 +162,7 @@ if __name__ == '__main__':
         train_loader,
         input_size=(size_x * size_y),
         output_size=(size_x * size_y),
-        hidden_sizes=[64],
+        hidden_sizes=[64, 128, 64, 32],
         learning_rate=0.00005,
         num_epochs=300,
         weight_decay=0.000025)

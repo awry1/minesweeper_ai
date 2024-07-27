@@ -33,12 +33,11 @@ def gameloop(size, default_mines, rand_mines, seed, limits):
             print('You Lose!')
             quit()
 
-        else:
-            reveal_squares(game_board, player_board, row, col)
-            if is_game_finished(game_board, player_board):
-                print_board(player_board)
-                print('You Win!')
-                quit()
+        reveal_squares(game_board, player_board, row, col)
+        if is_game_finished(game_board, player_board):
+            print_board(player_board)
+            print('You Win!')
+            quit()
 
 
 if __name__ == '__main__':

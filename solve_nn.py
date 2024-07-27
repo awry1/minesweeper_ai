@@ -1,17 +1,18 @@
-from solve_analytical import *
+from game import *
+from solve_analytical import update_risk_board, choose_least_risky_move
 from train_nn import MinesweeperMLP
 import os
 import torch
 
 # Constants for quick change
 SIZE = 5, 5     # X, Y
-DEFAULT_MINES = 4
+DEFAULT_MINES = 5
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 1 # 0 - no limit
-HIDDEN_SIZE = [64]
+MOVES_LIMIT = 0 # 0 - no limit
+HIDDEN_SIZE = [64, 128, 64, 32]
 ITERATIONS = 1000
 
 
@@ -22,7 +23,7 @@ def load_model(input_size, hidden_size, output_size, model_filename):
     return model
 
 
-def take_input_torch(size, num_mines, player_board, game_started, model, filename):
+def take_input_torch(size, num_mines, player_board, game_started, filename, model):
     size_x, size_y = size
     row, col = None, None
 
@@ -47,7 +48,7 @@ def take_input_torch(size, num_mines, player_board, game_started, model, filenam
         # Reshape the NumPy array to represent the board structure
         reshaped_board = numpy_risk_board.reshape((size_y, size_x))
 
-        save_torch_results(risk_board, num_mines, reshaped_board, filename)
+        save_torch_results(risk_board, reshaped_board, filename)
 
         row, col = choose_least_risky_move(reshaped_board)
     
@@ -60,7 +61,7 @@ def take_input_torch(size, num_mines, player_board, game_started, model, filenam
 
 def convert_board_to_numerical(board):
     # Define mapping from characters to numerical values
-    mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, ' ': 9.0}
+    mapping = {'_': -1.0, '0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, ' ': 9.0}
 
     # Convert characters to numerical values based on the mapping
     numerical_board = [[mapping[cell] if cell in mapping else 0 for cell in row] for row in board]
@@ -68,7 +69,7 @@ def convert_board_to_numerical(board):
     return numerical_board
 
 
-def save_torch_results(true_risk_board, torch_num_mines, torch_risk_board, filename):
+def save_torch_results(true_risk_board, torch_risk_board, filename):
     with open(filename, 'a') as file:
         file.write('True risk factors:\n')
 
@@ -82,24 +83,22 @@ def save_torch_results(true_risk_board, torch_num_mines, torch_risk_board, filen
             row_str = ' '.join([f'{round(cell, 3):.3f}' for cell in row])
             file.write(row_str + '\n')
 
-        file.write('Torch number of mines:\n')
-        file.write(str(torch_num_mines) + '\n')
         file.write('\n')
 
 
 def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, moves_limit):
-    size_x, size_y = size
+    # size_x, size_y = size
     num_mines = random_num_mines(default_mines, rand_mines)
     game_board, player_board = create_boards(size, num_mines)
 
     last_input = None
     game_started = False
     while True:
-        #risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
-        #risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
-        #true_row, true_col = choose_least_risky_move(risk_board)
+        # risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
+        # risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
+        # true_row, true_col = choose_least_risky_move(risk_board)
 
-        row, col = take_input_torch(size, num_mines, player_board, game_started, model, filename)
+        row, col = take_input_torch(size, num_mines, player_board, game_started, filename, model)
         
         if (row, col) == last_input or row is None or col is None:
             return '?'
@@ -114,17 +113,16 @@ def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, mov
             if not game_started:
                 return 'L1'
             return 'L'
-        else:
-            if game_started:
-                moves_limit -= 1
-                if moves_limit == 0:
-                    return 'W'
-            else:
-                game_started = True
-            reveal_squares(game_board, player_board, row, col)
-
-            if is_game_finished(game_board, player_board):
+        
+        if game_started:
+            moves_limit -= 1
+            if moves_limit == 0:
                 return 'W'
+        game_started = True
+        
+        reveal_squares(game_board, player_board, row, col)
+        if is_game_finished(game_board, player_board):
+            return 'W'
 
 
 def simulation(size, default_mines, rand_mines, limits, filename, model_filename, moves_limit, hidden_size, seed, iterations):

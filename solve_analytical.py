@@ -3,8 +3,8 @@ from sympy import Matrix, symbols, linsolve
 import os
 
 # Constants for quick change
-SIZE = 10, 10   # X, Y
-DEFAULT_MINES = 10
+SIZE = 5, 5   # X, Y
+DEFAULT_MINES = 5
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
@@ -281,14 +281,13 @@ def gameloop_analytical(size, default_mines, rand_mines, limits, filename):
                 return 'L1'
             return 'L'
 
-        else:
-            if game_started:
-                save_game_state(player_board, risk_board, filename)
-            game_started = True
+        if game_started:
+            save_game_state(player_board, risk_board, filename)
+        game_started = True
 
-            reveal_squares(game_board, player_board, row, col)
-            if is_game_finished(game_board, player_board):
-                return 'W'
+        reveal_squares(game_board, player_board, row, col)
+        if is_game_finished(game_board, player_board):
+            return 'W'
 
 
 def simulation(size, default_mines, rand_mines, limits, filename, seed, iterations):
@@ -302,7 +301,9 @@ def simulation(size, default_mines, rand_mines, limits, filename, seed, iteratio
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
-            print(f'Progress: {_}/{iterations}')
+            print(f'\nProgress: {_}/{iterations}')
+        if _ % 5 == 0:
+            print('░', end='', flush=True)
         result = gameloop_analytical(size, default_mines, rand_mines, limits, filename)
         if result == '?':
             undecided += 1

@@ -160,10 +160,11 @@ def is_game_finished(game_board, player_board):
 
 
 if __name__ == '__main__':
-    print('solve_human.py          play the game')
-    print('solve_analytical.py     create training data')
-    print('train_nn.py             train neural network')
-    print('solve_nn.py             test neural network')
+    print('solve_human.py (Optional)  play the game')
+    print('1) solve_analytical.py     create training data')
+    print('2) train_nn.py             train neural network')
+    print('3) solve_nn.py             test neural network')
+    print('Same with 5x5 approach for previous steps')
 
 
 # Old code
