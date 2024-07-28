@@ -1,3 +1,8 @@
 /__pycache__
 /.venv
 requrements.txt
+.idea/misc.xml
+RESULTS_TRAIN/SMP_TrainResult_s-(10, 10)_e-500_hs-\[50, 100, 50, 25\]_lr-3e-05_wd-2.5e-05.pth
+RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt
+DATA/SMP_Data_(10, 10)_1000.txt
+/RESULTS_TRAIN
