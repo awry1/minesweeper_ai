@@ -99,7 +99,7 @@ class MinesweeperCNN(nn.Module):
         self.conv2 = nn.Conv2d(25, 25, kernel_size=5, padding=2)  # 32 input channels, 64 output channels
         self.conv3 = nn.Conv2d(25, 64, kernel_size=5, padding=2)  # 64 input channels, 128 output channels
         self.dropout = nn.Dropout(p=0.3)
-        self.fc1 = nn.Linear(64 * self.size_x * self.size_y, 512)
+        self.fc1 = nn.Linear(64 * 5 * 5, 512)
         self.fc2 = nn.Linear(512, 1)  # Output a single risk value
 
     def forward(self, x):
@@ -109,7 +109,8 @@ class MinesweeperCNN(nn.Module):
         x = self.dropout(x)
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = F.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))  # Sigmoid for binary output
+        x = torch.sigmoid(self.fc2(x)) # Sigmoid for binary output
+        x = x.view(-1, 5, 5)  # Reshape to match the board dimensions
         return x
 
 
