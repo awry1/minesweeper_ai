@@ -6,3 +6,10 @@ RESULTS_TRAIN/SMP_TrainResult_s-(10, 10)_e-500_hs-\[50, 100, 50, 25\]_lr-3e-05_w
 RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt
 DATA/SMP_Data_(10, 10)_1000.txt
 /RESULTS_TRAIN
+.idea/modules.xml
+.idea/vcs.xml
+DATA/SMP_Data_(10, 10)_10.txt
+DATA/SMP_Data_(10, 10)_1000a.txt
+MODELS/Model_(5, 5).pth
+RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt
+RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt

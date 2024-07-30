@@ -7,10 +7,8 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 10, 10  # X, Y
-
+SIZE = 5, 5  # X, Y
 ITERATIONS = 1000  # Iterations in the data file
-WINDOW_SIZE = 5, 5
 
 def one_hot_encode(board, size_x, size_y):
     one_hot = np.zeros((10, size_x, size_y))  # 10 channels for 0-8 and covered cell (?)
@@ -21,11 +19,12 @@ def one_hot_encode(board, size_x, size_y):
     return one_hot
 
 class MinesweeperDataset(Dataset):
-    def __init__(self, file_path, window_size):
-        self.size_x, self.size_y = window_size
-        self.data = self.load_data_5x5(file_path)
+    def __init__(self, file_path, board_size):
+        self.size_x, self.size_y = board_size
+        self.data = self.load_data(file_path)
+        print(f"Loaded {len(self.data)} samples")
 
-    def load_data_5x5(self, file_path):
+    def load_data(self, file_path):
         with open(file_path, 'r') as file:
             lines = file.readlines()
 
@@ -33,47 +32,46 @@ class MinesweeperDataset(Dataset):
         risks = []
 
         input_board = []
-        risk_board = []
+        risk_value = None
+        is_risk_line = False
 
-        loading_risk = False
         for line in lines:
             line = line.strip()
 
-            if len(line) == 0:
-                loading_risk = False
-                if input_board and risk_board:
+            if is_risk_line:
+                risk_value = float(line)
+                is_risk_line = False
+                continue
+
+            if line == 'Risk:':
+                is_risk_line = True
+                continue
+
+            if not line:
+                if input_board and risk_value is not None:
                     inputs.append(self.board_to_numeric(input_board))
-                    risks.append(np.array(risk_board, dtype=float).flatten())
+                    risks.append(risk_value)  # Store the risk value directly
                 input_board = []
-                risk_board = []
+                risk_value = None
                 continue
 
-            if line.startswith('Risk:'):
-                loading_risk = True
-                continue
-
-            if loading_risk:
-                risk_board.append(line.split())
-            else:
-                input_board.append(line.split())
+            input_board.append(line.split())
 
         # Final append if file does not end with empty line
-        if input_board and risk_board:
+        if input_board and risk_value is not None:
             inputs.append(self.board_to_numeric(input_board))
-            risks.append(np.array(risk_board, dtype=float).flatten())
+            risks.append(risk_value)
 
         inputs = np.array(inputs, dtype=float)
         risks = np.array(risks, dtype=float)
 
-        # Normalize input and output data
-        inputs = (inputs - np.min(inputs)) / (np.max(inputs) - np.min(inputs))
-        risks = (risks - np.min(risks)) / (np.max(risks) - np.min(risks))
+        print(f"Loaded {len(inputs)} input boards and {len(risks)} risk values")
 
         return list(zip(inputs, risks))
 
+
     def board_to_numeric(self, board):
-        mapping = {'_': -1.0, '0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0,
-                   '?': 9.0}
+        mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0, '_': 9.0}
         numeric_board = np.zeros((self.size_x, self.size_y), dtype=float)
 
         for i, row in enumerate(board):
@@ -87,21 +85,22 @@ class MinesweeperDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        window, move = self.data[idx]
-        window = torch.tensor(window, dtype=torch.float32)
-        risk = torch.tensor(move, dtype=torch.float32)
-        return window, risk
+        board, risk_value = self.data[idx]
+        board = torch.tensor(board, dtype=torch.float32)
+        risk_value = torch.tensor(risk_value, dtype=torch.float32)
+        return board, risk_value
+
 
 class MinesweeperCNN(nn.Module):
     def __init__(self, board_size):
         super(MinesweeperCNN, self).__init__()
         self.size_x, self.size_y = board_size
-        self.conv1 = nn.Conv2d(10, 32, kernel_size=3, padding=1)  # 10 input channels, 32 output channels
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)  # 32 input channels, 64 output channels
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)  # 64 input channels, 128 output channels
+        self.conv1 = nn.Conv2d(1, 25, kernel_size=5, padding=2)  # 10 input channels, 32 output channels
+        self.conv2 = nn.Conv2d(25, 25, kernel_size=5, padding=2)  # 32 input channels, 64 output channels
+        self.conv3 = nn.Conv2d(25, 64, kernel_size=5, padding=2)  # 64 input channels, 128 output channels
         self.dropout = nn.Dropout(p=0.3)
-        self.fc1 = nn.Linear(128 * self.size_x * self.size_y, 512)
-        self.fc2 = nn.Linear(512, self.size_x * self.size_y)  # Output size matching the number of cells in the board
+        self.fc1 = nn.Linear(64 * self.size_x * self.size_y, 512)
+        self.fc2 = nn.Linear(512, 1)  # Output a single risk value
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -110,9 +109,9 @@ class MinesweeperCNN(nn.Module):
         x = self.dropout(x)
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = F.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
-        x = x.view(-1, self.size_x, self.size_y)  # Reshape to match the board dimensions
+        x = torch.sigmoid(self.fc2(x))  # Sigmoid for binary output
         return x
+
 
 def train_model(train_loader, board_size, learning_rate, num_epochs, weight_decay):
     model = MinesweeperCNN(board_size)  # Initialize the CNN model
@@ -131,15 +130,14 @@ def train_model(train_loader, board_size, learning_rate, num_epochs, weight_deca
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-        for boards, risk_boards in train_loader:
+        for boards, risk_values in train_loader:
             boards = boards.numpy()
             boards_one_hot = np.array([one_hot_encode(b, *board_size) for b in boards])
             boards_one_hot = torch.tensor(boards_one_hot, dtype=torch.float32)
 
             optimizer.zero_grad()
-            outputs = model(boards_one_hot)
-            risk_boards = risk_boards.view(-1, board_size[0], board_size[1])  # Reshape risk_boards
-            loss = criterion(outputs, risk_boards)
+            outputs = model(boards_one_hot).squeeze()
+            loss = criterion(outputs, risk_values)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -154,7 +152,8 @@ def train_model(train_loader, board_size, learning_rate, num_epochs, weight_deca
     torch.save(model.state_dict(), FILENAME)
 
 if __name__ == '__main__':
-    FILENAME = os.path.join('DATA', f'SMP_Data_{SIZE}_{ITERATIONS}.txt')
+
+    FILENAME = os.path.join('DATA//SMP_Data_(10, 10)_10.txt')
 
     print('Using data file:', FILENAME)
     print('Loading Data...')
@@ -167,7 +166,7 @@ if __name__ == '__main__':
 
     train_model(
         train_loader,
-        board_size=SIZE,
-        learning_rate=0.00005,
-        num_epochs=300,
-        weight_decay=0.000025)
+        board_size = SIZE,
+        learning_rate = 0.00005,
+        num_epochs = 300,
+        weight_decay = 0.000025)
