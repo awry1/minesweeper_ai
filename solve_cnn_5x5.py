@@ -2,13 +2,14 @@ from game import *
 from solve_nn import load_model, save_torch_results, convert_board_to_numerical
 from solve_analytical import update_risk_board, choose_least_risky_move, find_undiscovered_fields
 from solve_analytical_5x5 import create_window
-from CNN import MinesweeperCNN
+from CNN import MinesweeperCNN, one_hot_encode
+from CNN_test import board_to_string1
 import os
 import torch
 
 # Constants for quick change
 SIZE = 10, 10  # X, Y
-DEFAULT_MINES = 10
+DEFAULT_MINES = 4
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0  # Center, Edge, Corner
@@ -33,8 +34,10 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, filename, 
         for field, _ in undiscovered:
             row, col = field
             window = create_window(player_board, field, window_size)
-            window_numerical = convert_board_to_numerical(window)
-            window_tensor = torch.tensor(window_numerical, dtype=torch.float32).view(1, 1, window_x, window_y)  # Shape: [batch_size, channels, height, width]
+            #window_numerical = convert_board_to_numerical(window)
+            window = board_to_string1(window)
+            window_numerical = one_hot_encode(window, window_x, window_y)
+            window_tensor = torch.tensor(window_numerical, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
             torch_risk = model(window_tensor)
             torch_risk_board[row][col] = torch_risk.item()
 
@@ -91,8 +94,9 @@ def gameloop_torch_5x5(size, default_mines, rand_mines, limits, filename, model,
 
 
 def simulation_5x5(size, default_mines, rand_mines, limits, filename, model_filename, window_size, moves_limit, hidden_size, seed, iterations):
-    model = MinesweeperCNN()  # Initialize the modified CNN model
-    model.load_state_dict(torch.load(model_filename))
+    SIZE_t = (5, 5)
+    model = MinesweeperCNN(SIZE_t)  # Initialize the model class
+    model.load_state_dict(torch.load(model_filename))  # Load the trained weights
     model.eval()  # Set the model to evaluation mode
 
     if os.path.exists(filename):
