@@ -13,3 +13,5 @@ DATA/SMP_Data_(10, 10)_1000a.txt
 MODELS/Model_(5, 5).pth
 RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt
 RESULTS_TEST/SMP_TestResult_(10, 10)_1000.txt
+DATA/Data_(10, 10)_100.txt
+MODELS/Model_(10, 10).pth

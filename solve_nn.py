@@ -5,7 +5,7 @@ import os
 import torch
 
 # Constants for quick change
-SIZE = 5, 5     # X, Y
+SIZE = 10, 10     # X, Y
 DEFAULT_MINES = 5
 RAND_MINES = False
 SEED = None
