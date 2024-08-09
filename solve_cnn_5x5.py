@@ -132,7 +132,7 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, model_file
 
 
 if __name__ == '__main__':
-    MODEL_FILENAME = os.path.join('MODELS', f'Model_{SIZE}_cnn.pth')
+    MODEL_FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}_cnn.pth')
     print('Using model file:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
     FILENAME = os.path.join('RESULTS_TEST', f'SMP_TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')

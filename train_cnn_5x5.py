@@ -168,7 +168,7 @@ def train_model(train_loader, board_size, learning_rate, num_epochs, weight_deca
 
 if __name__ == '__main__':
 
-    FILENAME = os.path.join(f'DATA//SMP_Data_(10, 10)_{ITERATIONS}.txt')
+    FILENAME = os.path.join(f'DATA//SMP_Data_{BOARD_SIZE}_{ITERATIONS}.txt')
 
     print('Using data file:', FILENAME)
     print('Loading Data...')
