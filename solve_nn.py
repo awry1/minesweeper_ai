@@ -5,13 +5,13 @@ import os
 import torch
 
 # Constants for quick change
-SIZE = 5, 5     # X, Y
+SIZE = 10, 10     # X, Y
 DEFAULT_MINES = 5
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 0 # 0 - no limit
+MOVES_LIMIT = 1 # 0 - no limit
 HIDDEN_SIZE = [64, 128, 64, 32]
 ITERATIONS = 1000
 
@@ -139,7 +139,9 @@ def simulation(size, default_mines, rand_mines, limits, filename, model_filename
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
-            print(f'Progress: {_}/{iterations}')
+            print(f'\nProgress: {_}/{iterations}')
+        if _ % 5 == 0:
+            print('░', end='', flush=True)
         result = gameloop_torch(size, default_mines, rand_mines, limits, filename, model, moves_limit)
         if result == '?':
             undecided += 1
@@ -161,8 +163,8 @@ def simulation(size, default_mines, rand_mines, limits, filename, model_filename
 
 
 if __name__ == '__main__':
-    MODEL_FILENAME = os.path.join('MODELS', f'Model_{SIZE}.pth')
+    MODEL_FILENAME = os.path.join('MODELS', f'Model_{SIZE}_nn.pth')
     print('Using model file:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
-    FILENAME = os.path.join('RESULTS_TEST', f'TestResult_{SIZE}_{ITERATIONS}.txt')
+    FILENAME = os.path.join('RESULTS_TEST', f'TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')
     simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, MOVES_LIMIT, HIDDEN_SIZE, SEED, ITERATIONS)

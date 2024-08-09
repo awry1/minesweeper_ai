@@ -7,12 +7,12 @@ import torch
 
 # Constants for quick change
 SIZE = 10, 10  # X, Y
-DEFAULT_MINES = 10
+DEFAULT_MINES = 5
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0  # Center, Edge, Corner
 
-MOVES_LIMIT = 0  # 0 - no limit
+MOVES_LIMIT = 1  # 0 - no limit
 HIDDEN_SIZE = [50, 100, 50, 25]
 ITERATIONS = 1000
 WINDOW_SIZE = 5, 5
@@ -130,8 +130,8 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, model_file
 
 
 if __name__ == '__main__':
-    MODEL_FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}.pth')
+    MODEL_FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}_nn.pth')
     print('Using model file:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
-    FILENAME = os.path.join('RESULTS_TEST', f'SMP_TestResult_{SIZE}_{ITERATIONS}.txt')
+    FILENAME = os.path.join('RESULTS_TEST', f'SMP_TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')
     simulation_5x5(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, WINDOW_SIZE, MOVES_LIMIT, HIDDEN_SIZE, SEED, ITERATIONS)

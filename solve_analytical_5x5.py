@@ -9,7 +9,7 @@ RAND_MINES = 0
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-ITERATIONS = 10
+ITERATIONS = 20
 WINDOW_SIZE = 5, 5
 
 

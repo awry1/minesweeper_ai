@@ -5,7 +5,7 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 5, 5     # X, Y
+SIZE = 10, 10     # X, Y
 
 ITERATIONS = 1000   # Iterations in the data file
 
@@ -140,7 +140,7 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
             file.write(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss}\n')
 
     os.makedirs('MODELS', exist_ok=True)
-    FILENAME = os.path.join('MODELS', f'Model_{SIZE}.pth')
+    FILENAME = os.path.join('MODELS', f'Model_{SIZE}_nn.pth')
 
     torch.save(model.state_dict(), FILENAME)
 

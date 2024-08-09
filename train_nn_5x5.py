@@ -135,7 +135,7 @@ def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learnin
         epoch += 1 """
 
     os.makedirs('MODELS', exist_ok=True)
-    FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}.pth')
+    FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}_nn.pth')
 
     torch.save(model.state_dict(), FILENAME)
 
@@ -159,5 +159,5 @@ if __name__ == '__main__':
         output_size=(1),
         hidden_sizes=[50, 100, 50, 25],
         learning_rate=0.00003,
-        num_epochs=500,
+        num_epochs=200,
         weight_decay=0.000025)

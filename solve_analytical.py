@@ -3,13 +3,13 @@ from sympy import Matrix, symbols, linsolve
 import os
 
 # Constants for quick change
-SIZE = 5, 5   # X, Y
-DEFAULT_MINES = 5
+SIZE = 10, 10   # X, Y
+DEFAULT_MINES = 10
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-ITERATIONS = 1000
+ITERATIONS = 400
 
 
 def find_undiscovered_fields(player_board):
