@@ -1,15 +1,16 @@
 from game import *
 from solve_analytical import solve_analytical, choose_least_risky_move, find_undiscovered_fields, update_risk_board
 import os
+import time
 
 # Constants for quick change
-SIZE = 10, 10   # X, Y
+SIZE = 10, 10       # X, Y
 DEFAULT_MINES = 10
-RAND_MINES = 0
+RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-ITERATIONS = 20
+ITERATIONS = 1000
 WINDOW_SIZE = 5, 5
 
 
@@ -20,8 +21,8 @@ def create_window(player_board, field, windows_size):
     half_size_y = window_y // 2
     row, col = field
 
-    #for i in range(row-2, row+3):
-    #    for j in range(col-2, col+3):
+    # for i in range(row - 2, row + 3):
+    #    for j in range(col - 2, col + 3):
     #        if 0 <= i <= len(player_board) and 0 <= j <= len(player_board[0]):
     #            window[i][j] = player_board[i][j]
 
@@ -110,6 +111,7 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, window_siz
     if seed is not None:
         random.seed(seed)
 
+    print('Generating data', end='')
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
@@ -127,10 +129,12 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, window_siz
             loses += 1
 
     print(f'\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}')
-    quit()
+    print('Data saved:', filename)
 
 
 if __name__ == '__main__':
     os.makedirs('DATA', exist_ok=True)
     FILENAME = os.path.join('DATA', f'SMP_Data_{SIZE}_{ITERATIONS}.txt')
+    start_time = time.time()
     simulation_5x5(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, WINDOW_SIZE, SEED, ITERATIONS)
+    print(f'Data generated after: {time.time() - start_time:.2f}s')

@@ -6,13 +6,13 @@ import os
 import torch
 
 # Constants for quick change
-SIZE = 10, 10  # X, Y
-DEFAULT_MINES = 5
+SIZE = 10, 10       # X, Y
+DEFAULT_MINES = 10
 RAND_MINES = False
 SEED = None
-LIMITS = 0, 0, 0  # Center, Edge, Corner
+LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 1  # 0 - no limit
+MOVES_LIMIT = 1     # 0 - no limit
 HIDDEN_SIZE = [50, 100, 50, 25]
 ITERATIONS = 1000
 WINDOW_SIZE = 5, 5
@@ -48,22 +48,16 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, filename, 
     if not is_input_valid(size, row, col):
         return None, None
 
-    # print('\nAI chose:', col, row)
     return row, col
 
 
 def gameloop_torch_5x5(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit):
-    # size_x, size_y = size
     num_mines = random_num_mines(default_mines, rand_mines)
     game_board, player_board = create_boards(size, num_mines)
 
     last_input = None
     game_started = False
     while True:
-        # risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
-        # risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
-        # true_row, true_col = choose_least_risky_move(risk_board)
-
         row, col = take_input_torch_5x5(size, num_mines, player_board, game_started, filename, model, window_size)
 
         if (row, col) == last_input or row is None or col is None:
@@ -74,7 +68,6 @@ def gameloop_torch_5x5(size, default_mines, rand_mines, limits, filename, model,
 
         last_input = row, col
 
-        #  true_row != row or true_col != col
         if is_mine(game_board, row, col):
             if not game_started:
                 return 'L1'
@@ -103,6 +96,7 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, model_file
     if seed is not None:
         random.seed(seed)
 
+    print('Testing model', end='')
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
@@ -126,12 +120,11 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, model_file
         file.write(f'Wins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}\n')
         file.write('\n')
         file.write(existing_content)
-    quit()
 
 
 if __name__ == '__main__':
-    MODEL_FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}_nn.pth')
-    print('Using model file:', MODEL_FILENAME)
+    MODEL_FILENAME = os.path.join('MODELS', f'SMP_Model_NN_{SIZE}.pth')
+    print('Loading model:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
     FILENAME = os.path.join('RESULTS_TEST', f'SMP_TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')
     simulation_5x5(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, WINDOW_SIZE, MOVES_LIMIT, HIDDEN_SIZE, SEED, ITERATIONS)

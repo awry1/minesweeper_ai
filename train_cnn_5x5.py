@@ -1,15 +1,16 @@
 import os
-import numpy as np
+import time
 import torch
-import torch.nn as nn
+import numpy as np
+from torch import nn, optim
 import torch.nn.functional as F
-import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-BOARD_SIZE = 10, 10
-SIZE = 5, 5  # X, Y
-ITERATIONS = 10  # Iterations in the data file
+SIZE = 10, 10       # X, Y
+
+ITERATIONS = 10     # Iterations in the SMP_Data file
+WINDOW_SIZE = 5, 5
 
 
 def one_hot_encode(board, size_x, size_y):
@@ -82,14 +83,14 @@ class MinesweeperDataset(Dataset):
         return list(zip(inputs, risks))
 
     def board_to_numeric(self, board):
-        mapping = {'0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0,
-                   '_': 10.0}
+        mapping = {'_': -1.0, '0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, 
+                   '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0}
         numeric_board = np.zeros((self.size_x, self.size_y), dtype=float)
 
         for i, row in enumerate(board):
             for j, cell in enumerate(row):
                 if i < self.size_x and j < self.size_y:
-                    numeric_board[i][j] = mapping.get(cell, 0)
+                    numeric_board[i][j] = mapping.get(cell, 10)
 
         return numeric_board.flatten()
 
@@ -126,17 +127,22 @@ class MinesweeperCNN(nn.Module):
 
 
 def train_model(train_loader, board_size, learning_rate, num_epochs, weight_decay):
-    model = MinesweeperCNN(board_size)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = MinesweeperCNN(board_size).to(device)  # Move model to device
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
     os.makedirs('RESULTS_TRAIN', exist_ok=True)
-    FILENAME = os.path.join('RESULTS_TRAIN', f'TrainResult_s-{board_size}_'
-                                             f'e-{num_epochs}_lr-{learning_rate}_wd-{weight_decay}.pth')
+    FILENAME = os.path.join('RESULTS_TRAIN', f'SMP_TrainResult_s-{SIZE}_'
+                            f'e-{num_epochs}_'  # 'hs-{hidden_sizes}_'
+                            f'lr-{learning_rate}_wd-{weight_decay}.pth')
     if os.path.exists(FILENAME):
+        # Remove the file if it exists
         os.remove(FILENAME)
 
+    print('Using device:', device)
+    print('Training model')
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -146,6 +152,8 @@ def train_model(train_loader, board_size, learning_rate, num_epochs, weight_deca
             boards_one_hot = torch.tensor(boards_one_hot, dtype=torch.float32)
 
             optimizer.zero_grad()
+            boards_one_hot = boards_one_hot.to(device)
+            risk_values = risk_values.to(device)
             outputs = model(boards_one_hot)
 
             # Flatten risk_values for a single risk value per board
@@ -156,32 +164,33 @@ def train_model(train_loader, board_size, learning_rate, num_epochs, weight_deca
             optimizer.step()
             running_loss += loss.item()
         scheduler.step()
-        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss / len(train_loader)}')
+        print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss / len(train_loader)}')
         with open(FILENAME, 'a') as file:
-            file.write(f'Epoch {epoch+1}/{num_epochs}, Loss: {running_loss / len(train_loader)}\n')
+            file.write(f'Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss / len(train_loader)}\n')
 
     os.makedirs('MODELS', exist_ok=True)
-    FILENAME = os.path.join('MODELS', f'SMP_Model_{BOARD_SIZE}_cnn.pth')
-
+    FILENAME = os.path.join('MODELS', f'SMP_Model_CNN_{SIZE}.pth')
     torch.save(model.state_dict(), FILENAME)
+    print('Model saved:', FILENAME)
 
 
 if __name__ == '__main__':
+    FILENAME = os.path.join('DATA', f'SMP_Data_{SIZE}_{ITERATIONS}.txt')
 
-    FILENAME = os.path.join(f'DATA//SMP_Data_{BOARD_SIZE}_{ITERATIONS}.txt')
-
-    print('Using data file:', FILENAME)
-    print('Loading Data...')
-    dataset = MinesweeperDataset(FILENAME, SIZE)
+    start_time = time.time()
+    print('Loading data:', FILENAME)
+    dataset = MinesweeperDataset(FILENAME, WINDOW_SIZE)
     train_loader = DataLoader(
         dataset,
-        batch_size= 128,  # Adjust batch size as needed
+        batch_size=200,  # Adjust batch size as needed
         shuffle=True)
-    print('Data Loaded')
+    print(f'Data loaded after: {time.time() - start_time:.2f}s')
 
+    start_time = time.time()
     train_model(
-        train_loader,
-        board_size=SIZE,
-        learning_rate=0.00005,
-        num_epochs=200,
-        weight_decay=0.000025)
+            train_loader,
+            board_size=WINDOW_SIZE,
+            learning_rate=0.00005,
+            num_epochs=50,
+            weight_decay=0.000025)
+    print(f'Model trained after: {time.time() - start_time:.2f}s')

@@ -5,17 +5,25 @@ from solve_analytical_5x5 import create_window
 from train_cnn import MinesweeperCNN, one_hot_encode
 import os
 import torch
+import numpy as np
 
 # Constants for quick change
-SIZE = 10, 10  # X, Y
-DEFAULT_MINES = 4
+SIZE = 10, 10       # X, Y
+DEFAULT_MINES = 10
 RAND_MINES = False
 SEED = None
-LIMITS = 0, 0, 0  # Center, Edge, Corner
+LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 0  # 0 - no limit
+MOVES_LIMIT = 1     # 0 - no limit
 ITERATIONS = 1000
 WINDOW_SIZE = 10, 10
+
+
+def load_model(input_size, model_filename):
+    model = MinesweeperCNN(input_size)  # Initialize the model class
+    model.load_state_dict(torch.load(model_filename, weights_only=True))  # Load the trained weights
+    model.eval()  # Set the model to evaluation mode
+    return model
 
 
 def take_input_torch_10x10(size, num_mines, player_board, game_started, filename, model, window_size):
@@ -26,6 +34,7 @@ def take_input_torch_10x10(size, num_mines, player_board, game_started, filename
         return row, col
 
     with torch.no_grad():  # Disable gradient computation during evaluation
+        # What is this even
         undiscovered = find_undiscovered_fields(player_board)
         torch_risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
         for field, _ in undiscovered:
@@ -36,6 +45,20 @@ def take_input_torch_10x10(size, num_mines, player_board, game_started, filename
             window_tensor = torch.tensor(window_numerical, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
             torch_risk = model(window_tensor)
             torch_risk_board[row][col] = torch_risk.view(size_x, size_y)[row, col].item()
+
+        """ Copied from solve_nn.py
+        # Convert player_board list to tensor
+        player_board_numerical = convert_board_to_numerical(player_board)
+        player_board_tensor = torch.tensor(player_board_numerical, dtype=torch.float32).view(1, size_x * size_y)
+
+        tensor_risk_board = model(player_board_tensor)
+
+        # Convert PyTorch tensor to NumPy array
+        numpy_risk_board = tensor_risk_board.cpu().detach().numpy()
+
+        # Reshape the NumPy array to represent the board structure
+        reshaped_board = numpy_risk_board.reshape((size_y, size_x))
+        """
 
         # For debugging purposes
         risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
@@ -49,6 +72,19 @@ def take_input_torch_10x10(size, num_mines, player_board, game_started, filename
         return None, None
 
     return row, col
+
+
+def board_to_string(board, unknown_value=9.0, artificial_value=9.0):
+    # Flatten the 2D board list into a 1D list of floats
+    flattened_board = [
+        unknown_value if cell == '?' or cell == ' ' else
+        artificial_value if cell == '_' else
+        float(cell)  # Convert numeric characters to float
+        for row in board for cell in row
+    ]
+    # Convert the list into a numpy ndarray with shape (25,)
+    board_ndarray = np.array(flattened_board, dtype=float)
+    return board_ndarray
 
 
 def gameloop_torch_10x10(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit):
@@ -86,9 +122,7 @@ def gameloop_torch_10x10(size, default_mines, rand_mines, limits, filename, mode
 
 
 def simulation_10x10(size, default_mines, rand_mines, limits, filename, model_filename, window_size, moves_limit, seed, iterations):
-    model = MinesweeperCNN(window_size)  # Initialize the model class
-    model.load_state_dict(torch.load(model_filename))  # Load the trained weights
-    model.eval()  # Set the model to evaluation mode
+    model = load_model(window_size, model_filename)
 
     if os.path.exists(filename):
         # Remove the file if it exists
@@ -97,6 +131,7 @@ def simulation_10x10(size, default_mines, rand_mines, limits, filename, model_fi
     if seed is not None:
         random.seed(seed)
 
+    print('Testing model', end='')
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
@@ -120,11 +155,10 @@ def simulation_10x10(size, default_mines, rand_mines, limits, filename, model_fi
         file.write(f'Wins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}\n')
         file.write('\n')
         file.write(existing_content)
-    quit()
 
 
 if __name__ == '__main__':
-    MODEL_FILENAME = os.path.join('MODELS', f'Model_{SIZE}_cnn.pth')
+    MODEL_FILENAME = os.path.join('MODELS', f'Model_CNN_{SIZE}.pth')
     print('Using model file:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
     FILENAME = os.path.join('RESULTS_TEST', f'TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')

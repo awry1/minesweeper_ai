@@ -1,15 +1,17 @@
 from train_nn import MinesweeperMLP
 import os
+import time
 import torch
 import numpy as np
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 10, 10  # X, Y
+SIZE = 10, 10       # X, Y
 
-ITERATIONS = 1000  # Iterations in the data file
+ITERATIONS = 1000   # Iterations in the SMP_Data file
 WINDOW_SIZE = 5, 5
+ENCHANCE = True
 
 
 # Creating custom dataset for boards and moves
@@ -65,14 +67,14 @@ class MinesweeperDataset5x5(Dataset):
         return list(zip(inputs, risks))
 
     def board_to_numeric(self, board):
-        mapping = {'_': -1.0, '0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0,
-                   '?': 9.0}
+        mapping = {'_': -1.0, '0': 0.0, '1': 1.0, '2': 2.0, '3': 3.0, '4': 4.0, 
+                   '5': 5.0, '6': 6.0, '7': 7.0, '8': 8.0, '?': 9.0}
         numeric_board = np.zeros((self.size_x, self.size_y), dtype=float)
 
         for i, row in enumerate(board):
             for j, cell in enumerate(row):
                 if i < self.size_x and j < self.size_y:
-                    numeric_board[i][j] = mapping.get(cell, 0)
+                    numeric_board[i][j] = mapping.get(cell, 10)
 
         return numeric_board.flatten()
 
@@ -86,8 +88,14 @@ class MinesweeperDataset5x5(Dataset):
         return window, risk
 
 
+# Step 2: Define the model
+# Imported from train_nn.py
+
+
+# Step 3 & 4: Define loss function and optimizer and create training loop
 def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learning_rate, num_epochs, weight_decay):
-    model = MinesweeperMLP(input_size, hidden_sizes, output_size)  # Move model to device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = MinesweeperMLP(input_size, hidden_sizes, output_size).to(device)  # Move model to device
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
@@ -101,12 +109,16 @@ def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learnin
         os.remove(FILENAME)
 
     # Run for a fixed number of epochs
+    print('Using device:', device)
+    print('Training model')
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
         # num_mines
         for window, risk in train_loader:
             optimizer.zero_grad()
+            window = window.to(device)
+            risk = risk.to(device)
             outputs = model(window)
             loss = criterion(outputs, risk)
             loss.backward()
@@ -117,47 +129,84 @@ def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learnin
         with open(FILENAME, 'a') as file:
             file.write(f'Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss}\n')
     
-    """ # Run till good
+    os.makedirs('MODELS', exist_ok=True)
+    FILENAME = os.path.join('MODELS', f'SMP_Model_NN_{SIZE}.pth')
+    torch.save(model.state_dict(), FILENAME)
+    print('Model saved:', FILENAME)
+
+
+def enchance_model_5x5(train_loader, input_size, output_size, hidden_sizes, learning_rate, weight_decay):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = MinesweeperMLP(input_size, hidden_sizes, output_size).to(device)
+    criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
+
+    # Load the model if it exists
+    FILENAME = os.path.join('MODELS', f'SMP_Model_NN_{SIZE}.pth')
+    if not os.path.exists(FILENAME):
+        print('Unable to find model:', FILENAME)
+        quit()
+    model.load_state_dict(torch.load(FILENAME, map_location=device))
+    print('Loading model:', FILENAME)
+    
+    # Run till good with a periodic save
+    print('Using device:', device)
+    print('Training model')
     running_loss = 1.0
-    epoch = 0
+    epoch = 1
     while running_loss > 0.01:
         model.train()
         running_loss = 0.0
         for window, risk in train_loader:
             optimizer.zero_grad()
+            window = window.to(device)
+            risk = risk.to(device)
             outputs = model(window)
             loss = criterion(outputs, risk)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
         scheduler.step()
-        print(f'Epoch {epoch}/till good, Loss: {running_loss}')
-        epoch += 1 """
-
-    os.makedirs('MODELS', exist_ok=True)
-    FILENAME = os.path.join('MODELS', f'SMP_Model_{SIZE}_nn.pth')
+        print(f'Epoch {epoch}, Loss: {running_loss}')
+        if epoch % 100 == 0:
+            torch.save(model.state_dict(), FILENAME)
+            print('Model saved:', FILENAME)
+        epoch += 1
 
     torch.save(model.state_dict(), FILENAME)
+    print('Model saved:', FILENAME)
 
 
 if __name__ == '__main__':
     FILENAME = os.path.join('DATA', f'SMP_Data_{SIZE}_{ITERATIONS}.txt')
+    size_x, size_y = WINDOW_SIZE
 
-    print('Using data file:', FILENAME)
-    print('Loading Data...')
+    start_time = time.time()
+    print('Loading data:', FILENAME)
     dataset = MinesweeperDataset5x5(FILENAME, WINDOW_SIZE)
     train_loader = DataLoader(
         dataset,
-        batch_size=32768, # 65536 131072
+        batch_size=100000,
         shuffle=True)
-    print('Data Loaded')
+    print(f'Data loaded after: {time.time() - start_time:.2f}s')
 
-    size_x, size_y = WINDOW_SIZE
-    train_model_5x5(
-        train_loader,
-        input_size=(size_x * size_y),
-        output_size=(1),
-        hidden_sizes=[50, 100, 50, 25],
-        learning_rate=0.00003,
-        num_epochs=200,
-        weight_decay=0.000025)
+    start_time = time.time()
+    if ENCHANCE:
+        enchance_model_5x5(
+            train_loader,
+            input_size=(size_x * size_y),
+            output_size=(1),
+            hidden_sizes=[50, 100, 50, 25],
+            learning_rate=0.00001,
+            weight_decay=0.000025)
+    else:
+        train_model_5x5(
+            train_loader,
+            input_size=(size_x * size_y),
+            output_size=(1),
+            hidden_sizes=[50, 100, 50, 25],
+            learning_rate=0.00001,
+            num_epochs=300,
+            weight_decay=0.000025)
+    print(f'Model trained after: {time.time() - start_time:.2f}s')

@@ -44,13 +44,13 @@ def generate_all_boards(size, num_mines, filename):
 def Newton(n, k):
     if k == 0:
         return 1
-    return Newton(n, k-1) * (n - k + 1) // k
+    return Newton(n, k - 1) * (n - k + 1) // k
 
 
 if __name__ == '__main__':
     num_to_expect = 0
     size_x, size_y = SIZE
-    for i in range(0, NUM_MINES+1):
+    for i in range(0, NUM_MINES + 1):
         num_to_expect += Newton(size_x * size_y, i)
     print(f'Number of boards to expect: {num_to_expect}')
 

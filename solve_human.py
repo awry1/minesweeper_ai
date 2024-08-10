@@ -1,7 +1,7 @@
 from game import *
 
 # Constants for quick change
-SIZE = 9, 9     # X, Y
+SIZE = 9, 9         # X, Y
 DEFAULT_MINES = 10
 RAND_MINES = False
 SEED = None

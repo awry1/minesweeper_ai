@@ -1,15 +1,16 @@
 from game import *
 from sympy import Matrix, symbols, linsolve
 import os
+import time
 
 # Constants for quick change
-SIZE = 10, 10   # X, Y
+SIZE = 10, 10       # X, Y
 DEFAULT_MINES = 10
 RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-ITERATIONS = 400
+ITERATIONS = 500
 
 
 def find_undiscovered_fields(player_board):
@@ -241,7 +242,6 @@ def take_input_analytical(size, num_mines, player_board, game_started):
         else:
             row, col = choose_least_risky_move(risk_board)
 
-    # print('\nAI chose:', col, row)
     return row, col, risk_board
 
 
@@ -298,6 +298,7 @@ def simulation(size, default_mines, rand_mines, limits, filename, seed, iteratio
     if seed is not None:
         random.seed(seed)
 
+    print('Generating data', end='')
     wins, loses, loses1, undecided = 0, 0, 0, 0
     for _ in range(iterations):
         if _ % 100 == 0:
@@ -315,94 +316,12 @@ def simulation(size, default_mines, rand_mines, limits, filename, seed, iteratio
             loses += 1
 
     print(f'\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}')
-    quit()
+    print('Data saved:', filename)
 
 
 if __name__ == '__main__':
     os.makedirs('DATA', exist_ok=True)
     FILENAME = os.path.join('DATA', f'Data_{SIZE}_{ITERATIONS}.txt')
+    start_time = time.time()
     simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, SEED, ITERATIONS)
-
-
-# Old code
-""" def update_risk_board(num_mines, player_board, risk_board, moves, mines):
-    # # Don't know if works as intended
-
-    # if len(mines) == num_mines:
-    #     for row in range(len(player_board)):
-    #         for col in range(len(player_board[0])):
-    #             if player_board[row][col] == ' ' and (row, col) not in mines:
-    #                 risk_board[row][col] = 0.0
-    #     return risk_board
-
-    min_risk, max_risk = find_min_max_risks(player_board)
-    for row in range(len(player_board)):
-        for col in range(len(player_board[0])):
-            if player_board[row][col] == ' ':
-                if (row, col) in moves:
-                    risk_board[row][col] = 0.0
-                    continue
-                # # Already 1.0 on the board, no need to update
-                # if (row, col) in mines:
-                #     risk_board[row][col] = 1.0
-                #     continue
-                risk_board[row][col] = find_normalized_risk(player_board, row, col, min_risk, max_risk)
-    return risk_board """
-
-
-""" def find_min_max_risks(player_board):
-    # Used to normalize risk values
-    min_risk = float('inf')
-    max_risk = float('-inf')
-
-    for row in range(len(player_board)):
-        for col in range(len(player_board[0])):
-            if player_board[row][col] == ' ':
-                risk = estimate_risk(player_board, row, col)
-                if risk < min_risk:
-                    min_risk = risk
-                if risk > max_risk:
-                    max_risk = risk
-
-    return min_risk, max_risk """
-
-
-""" def estimate_risk(player_board, row, col):
-    # Find all adjacent numbers and store them in list
-    numbers = find_adjacent_numbers(player_board, row, col)
-
-    # For every number in list find number of adjacent hidden fields
-    # Calculate subrisk and store it in list (subrisk = value / hidden_fields)
-    risks = []
-    for number in numbers:
-        row, col = number
-        hidden_fields = 0
-        for i in range(row - 1, row + 2):
-            for j in range(col - 1, col + 2):
-                if 0 <= i < len(player_board) and 0 <= j < len(player_board[0]):
-                    if player_board[i][j] == ' ':
-                        hidden_fields += 1
-        # # If somehow the number is not adjacent EVEN TO THE GIVEN FIELD
-        # if hidden_fields == 0:
-        #     risk.append(0)
-        #     continue
-        value = ord(player_board[row][col]) - 48
-        risks.append((value / hidden_fields))
-
-    # Estimated risk is sum of every subrisk calculated above
-    risk = 0
-    for subrisk in risks:
-        risk += subrisk
-    return risk """
-
-
-""" def find_normalized_risk(player_board, row, col, min_risk, max_risk):
-    risk = estimate_risk(player_board, row, col)
-    if risk == 0.0:
-        return 1.0
-
-    if max_risk > min_risk:
-        normalized_risk = (risk - min_risk) / (max_risk - min_risk)
-        normalized_risk = round(normalized_risk, 2)
-        return normalized_risk
-    return 1.0  # If all risks are the same """
+    print(f'Data generated after: {time.time() - start_time:.2f}s')

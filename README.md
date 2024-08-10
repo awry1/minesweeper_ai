@@ -7,4 +7,3 @@ To Do:
 4) Create proper decision tree, using output from NN/CNN (for 5x5 method)
 5) Construct encoding neural network (enn) and test it
 6) Write documentation
-

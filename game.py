@@ -1,25 +1,9 @@
 import random
-import numpy as np
-
-
-# Used by solve_cnn files
-def board_to_string(board, unknown_value=9.0, artificial_value=9.0):
-    # Flatten the 2D board list into a 1D list of floats
-    flattened_board = [
-        unknown_value if cell == '?' or cell == ' ' else
-        artificial_value if cell == '_' else
-        float(cell)  # Convert numeric characters to float
-        for row in board for cell in row
-    ]
-    # Convert the list into a numpy ndarray with shape (25,)
-    board_ndarray = np.array(flattened_board, dtype=float)
-    return board_ndarray
-
 
 def random_num_mines(default_mines, rand_mines):
     if not rand_mines:
         return default_mines
-
+    
     # Max 10, optimized for 5x5 board
     if random.randint(0, 10) < 8:  # 80% chance for less mines
         return random.randint(1, 4)
@@ -176,35 +160,10 @@ def is_game_finished(game_board, player_board):
 
 
 if __name__ == '__main__':
-    print('solve_human.py (Optional)  play the game')
-    print('1) solve_analytical.py     create training data')
-    print('2) train_nn.py             train neural network')
-    print('3) solve_nn.py             test neural network')
-    print('Same with 5x5 approach for previous steps')
-
-# Old code
-""" def create_boards(size, num_mines):
-    size_x, size_y = size
-    game_board = [[' ' for _ in range(size_x)] for _ in range(size_y)]
-    player_board = [[' ' for _ in range(size_x)] for _ in range(size_y)]
-
-    mines = random.sample(range(size_x * size_y), num_mines)
-    for i in mines:
-        row = i // size_x
-        col = i % size_y
-        game_board[row][col] = 'X'
-
-    return game_board, player_board """
-
-""" def reveal_squares(game_board, player_board, row, col):
-    if player_board[row][col] != ' ':
-        return
-    # Not possible to enter function if mine
-    # if game_board[row][col] == 'X':
-    #     return
-    player_board[row][col] = str(count_adjacent_mines(game_board, row, col))
-    if player_board[row][col] == '0':
-        for i in range(row - 1, row + 2):
-            for j in range(col - 1, col + 2):
-                if 0 <= i < len(game_board) and 0 <= j < len(game_board[0]):
-                    reveal_squares(game_board, player_board, i, j) """
+    print('Welcome to Minesweeper!')
+    print('Run other files to play the game or train a neural network.')
+    print('0) solve_human.py            play the game manually')
+    print('1) solve_analytical.py       create training data')
+    print('2) train_nn.py               train neural network')
+    print('3) solve_nn.py               test neural network')
+    print('Same with 5x5 approach and other types of neural networks.')
