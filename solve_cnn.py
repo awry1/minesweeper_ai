@@ -85,14 +85,14 @@ def board_to_string(board, unknown_value=9.0, artificial_value=9.0):
     return board_ndarray
 
 
-def gameloop_torch_10x10(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit):
+def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit):
     num_mines = random_num_mines(default_mines, rand_mines)
     game_board, player_board = create_boards(size, num_mines)
 
     last_input = None
     game_started = False
     while True:
-        row, col = take_input_torch_10x10(size, num_mines, player_board, game_started, filename, model, window_size)
+        row, col = take_input_torch(size, num_mines, player_board, game_started, filename, model, window_size)
 
         if (row, col) == last_input or row is None or col is None:
             return '?'
@@ -119,7 +119,7 @@ def gameloop_torch_10x10(size, default_mines, rand_mines, limits, filename, mode
                 return 'W'
 
 
-def simulation_10x10(size, default_mines, rand_mines, limits, filename, model_filename, window_size, moves_limit, seed, iterations):
+def simulation(size, default_mines, rand_mines, limits, filename, model_filename, window_size, moves_limit, seed, iterations):
     model = load_model(window_size, model_filename)
 
     if os.path.exists(filename):
@@ -136,7 +136,7 @@ def simulation_10x10(size, default_mines, rand_mines, limits, filename, model_fi
             print(f'\nProgress: {_}/{iterations}')
         if _ % 5 == 0:
             print('░', end='', flush=True)
-        result = gameloop_torch_10x10(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit)
+        result = gameloop_torch(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit)
         if result == '?':
             undecided += 1
         elif result == 'W':
@@ -160,4 +160,4 @@ if __name__ == '__main__':
     print('Using model file:', MODEL_FILENAME)
     os.makedirs('RESULTS_TEST', exist_ok=True)
     FILENAME = os.path.join('RESULTS_TEST', f'TestResult_{SIZE}_{ITERATIONS}_{DEFAULT_MINES}.txt')
-    simulation_10x10(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, WINDOW_SIZE, MOVES_LIMIT, SEED, ITERATIONS)
+    simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, SIZE, MOVES_LIMIT, SEED, ITERATIONS)
