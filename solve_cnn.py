@@ -14,9 +14,8 @@ RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 1     # 0 - no limit
+MOVES_LIMIT = 0     # 0 - no limit
 ITERATIONS = 1000
-WINDOW_SIZE = 10, 10
 
 
 def load_model(input_size, model_filename):
@@ -39,10 +38,10 @@ def take_input_torch_10x10(size, num_mines, player_board, game_started, filename
         torch_risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
         for field, _ in undiscovered:
             row, col = field
-            window = create_window(player_board, field, window_size)
-            window = board_to_string(window)
-            window_numerical = one_hot_encode(window, window_size[0], window_size[1])
-            window_tensor = torch.tensor(window_numerical, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
+            #board = create_window(player_board, field, window_size)
+            board = board_to_string(player_board)
+            board = one_hot_encode(board, window_size[0], window_size[1])
+            window_tensor = torch.tensor(board, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
             torch_risk = model(window_tensor)
             torch_risk_board[row][col] = torch_risk.view(size_x, size_y)[row, col].item()
 

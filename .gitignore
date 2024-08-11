@@ -6,3 +6,5 @@
 requrements.txt
 /RESULTS_TRAIN
 /RESULTS_TEST
+DATA/SMP_Data_(10, 10)_1000a.txt
+MODELS/Model_(5, 5).pth
