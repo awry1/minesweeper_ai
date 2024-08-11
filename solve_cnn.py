@@ -1,7 +1,6 @@
 from game import *
 from solve_nn import save_torch_results
 from solve_analytical import update_risk_board, choose_least_risky_move, find_undiscovered_fields
-from solve_analytical_5x5 import create_window
 from train_cnn import MinesweeperCNN, one_hot_encode
 import os
 import torch
