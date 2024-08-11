@@ -1,5 +1,5 @@
 from game import *
-from solve_nn import load_model, save_torch_results, convert_board_to_numerical
+from solve_nn import load_model, convert_board_to_numerical
 from solve_analytical import update_risk_board, choose_least_risky_move, find_undiscovered_fields
 from solve_analytical_5x5 import create_window
 import os
@@ -35,13 +35,8 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, filename, 
             window_numerical = convert_board_to_numerical(window)
             window_tensor = torch.tensor(window_numerical, dtype=torch.float32).view(1, (window_x * window_y))
             torch_risk = model(window_tensor)
+            save_torch_results_5x5(window, torch_risk.item(), filename)
             torch_risk_board[row][col] = torch_risk.item()
-
-        # For debugging purposes
-        risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
-        risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
-
-        save_torch_results(risk_board, torch_risk_board, filename)
 
         row, col = choose_least_risky_move(torch_risk_board)
 
@@ -49,6 +44,18 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, filename, 
         return None, None
 
     return row, col
+
+
+def save_torch_results_5x5(window, risk, filename):
+    with open(filename, 'a') as file:
+        for row in window:
+            row_str = ' '.join(['?' if cell == ' ' else cell for cell in row])
+            file.write(row_str + '\n')
+
+        file.write('Risk:\n')
+        file.write(f'{risk:.2f}\n')
+
+        file.write('\n')
 
 
 def gameloop_torch_5x5(size, default_mines, rand_mines, limits, filename, model, window_size, moves_limit):

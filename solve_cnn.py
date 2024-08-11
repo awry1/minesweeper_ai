@@ -13,7 +13,7 @@ RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 0     # 0 - no limit
+MOVES_LIMIT = 1     # 0 - no limit
 ITERATIONS = 1000
 
 
@@ -32,31 +32,15 @@ def take_input_torch(size, num_mines, player_board, game_started, filename, mode
         return row, col
 
     with torch.no_grad():  # Disable gradient computation during evaluation
-        # What is this even
         undiscovered = find_undiscovered_fields(player_board)
         torch_risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
         for field, _ in undiscovered:
             row, col = field
-            #board = create_window(player_board, field, window_size)
             board = board_to_string(player_board)
             board = one_hot_encode(board, window_size[0], window_size[1])
             window_tensor = torch.tensor(board, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
             torch_risk = model(window_tensor)
             torch_risk_board[row][col] = torch_risk.view(size_x, size_y)[row, col].item()
-
-        """ Copied from solve_nn.py
-        # Convert player_board list to tensor
-        player_board_numerical = convert_board_to_numerical(player_board)
-        player_board_tensor = torch.tensor(player_board_numerical, dtype=torch.float32).view(1, size_x * size_y)
-
-        tensor_risk_board = model(player_board_tensor)
-
-        # Convert PyTorch tensor to NumPy array
-        numpy_risk_board = tensor_risk_board.cpu().detach().numpy()
-
-        # Reshape the NumPy array to represent the board structure
-        reshaped_board = numpy_risk_board.reshape((size_y, size_x))
-        """
 
         # For debugging purposes
         risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]

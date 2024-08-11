@@ -191,6 +191,6 @@ if __name__ == '__main__':
             train_loader,
             board_size=WINDOW_SIZE,
             learning_rate=0.00005,
-            num_epochs=50,
+            num_epochs=200,
             weight_decay=0.000025)
     print(f'Model trained after: {time.time() - start_time:.2f}s')

@@ -86,7 +86,7 @@ class MinesweeperDataset(Dataset):
         return board, risk_board
 
 
-# Step 2: Define the Model
+# Step 2: Define the model
 class MinesweeperMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(MinesweeperMLP, self).__init__()

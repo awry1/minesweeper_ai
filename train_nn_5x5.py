@@ -93,7 +93,7 @@ class MinesweeperDataset5x5(Dataset):
 
 
 # Step 3 & 4: Define loss function and optimizer and create training loop
-def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learning_rate, num_epochs, weight_decay):
+def train_model(train_loader, input_size, output_size, hidden_sizes, learning_rate, num_epochs, weight_decay):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = MinesweeperMLP(input_size, hidden_sizes, output_size).to(device)  # Move model to device
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
@@ -135,7 +135,7 @@ def train_model_5x5(train_loader, input_size, output_size, hidden_sizes, learnin
     print('Model saved:', FILENAME)
 
 
-def enchance_model_5x5(train_loader, input_size, output_size, hidden_sizes, learning_rate, weight_decay):
+def enchance_model(train_loader, input_size, output_size, hidden_sizes, learning_rate, weight_decay):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = MinesweeperMLP(input_size, hidden_sizes, output_size).to(device)
     criterion = nn.MSELoss()  # You can try nn.L1Loss() or a custom loss function
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     if ENCHANCE:
-        enchance_model_5x5(
+        enchance_model(
             train_loader,
             input_size=(size_x * size_y),
             output_size=(1),
@@ -201,7 +201,7 @@ if __name__ == '__main__':
             learning_rate=0.00001,
             weight_decay=0.000025)
     else:
-        train_model_5x5(
+        train_model(
             train_loader,
             input_size=(size_x * size_y),
             output_size=(1),

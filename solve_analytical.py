@@ -10,7 +10,7 @@ RAND_MINES = False
 SEED = None
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-ITERATIONS = 500
+ITERATIONS = 1000
 
 
 def find_undiscovered_fields(player_board):

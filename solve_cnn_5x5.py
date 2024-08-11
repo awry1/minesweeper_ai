@@ -1,6 +1,6 @@
 from game import *
-from solve_nn import save_torch_results
-from solve_analytical import update_risk_board, choose_least_risky_move, find_undiscovered_fields
+from solve_nn_5x5 import save_torch_results_5x5
+from solve_analytical import choose_least_risky_move, find_undiscovered_fields
 from solve_analytical_5x5 import create_window
 from solve_cnn import board_to_string
 from train_cnn_5x5 import MinesweeperCNN, one_hot_encode
@@ -40,18 +40,11 @@ def take_input_torch_5x5(size, num_mines, player_board, game_started, filename, 
         for field, _ in undiscovered:
             row, col = field
             window = create_window(player_board, field, window_size)
-            #window_numerical = convert_board_to_numerical(window)
-            window = board_to_string(window)
-            window_numerical = one_hot_encode(window, window_x, window_y)
+            window_numerical = one_hot_encode(board_to_string(window), window_x, window_y)
             window_tensor = torch.tensor(window_numerical, dtype=torch.float32).unsqueeze(0)  # Shape: [batch_size, channels, height, width]
             torch_risk = model(window_tensor)
+            save_torch_results_5x5(window, torch_risk.item(), filename)
             torch_risk_board[row][col] = torch_risk.item()
-
-        # For debugging purposes
-        risk_board = [[1.0 for _ in range(size_x)] for _ in range(size_y)]
-        risk_board = update_risk_board(num_mines, player_board, risk_board, [], [])
-
-        save_torch_results(risk_board, torch_risk_board, filename)
 
         row, col = choose_least_risky_move(torch_risk_board)
 
