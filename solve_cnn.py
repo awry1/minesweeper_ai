@@ -24,7 +24,7 @@ def load_model(input_size, model_filename):
     return model
 
 
-def take_input_torch_10x10(size, num_mines, player_board, game_started, filename, model, window_size):
+def take_input_torch(size, num_mines, player_board, game_started, filename, model, window_size):
     size_x, size_y = size
 
     if not game_started:
