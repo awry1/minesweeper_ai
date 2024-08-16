@@ -131,6 +131,10 @@ def simulation_5x5(size, default_mines, rand_mines, limits, filename, window_siz
     print(f'\nWins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}')
     print('Data saved:', filename)
 
+    filename = filename.replace('.txt', '_summary.txt')
+    with open(filename, 'w') as file:
+        file.write(f'Wins: {wins}, Loses: {loses}, Loses on first: {loses1}, Undecided: {undecided}\n')
+
 
 if __name__ == '__main__':
     os.makedirs('DATASETS', exist_ok=True)

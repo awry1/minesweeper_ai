@@ -8,12 +8,11 @@ import torch
 SIZE = 10, 10       # X, Y
 DEFAULT_MINES = 10
 RAND_MINES = False
-SEED = None
+SEED = 'alamakota'
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
 MOVES_LIMIT = 1     # 0 - no limit
 HIDDEN_SIZE = [50, 100, 50, 25]
-ITERATIONS = 1000
 
 
 def load_model(input_size, hidden_size, output_size, model_filename):
@@ -118,7 +117,8 @@ def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, mov
             return 'W'
 
 
-def simulation(size, default_mines, rand_mines, limits, filename, model_filename, moves_limit, hidden_size, seed, iterations):
+def simulation(size, default_mines, rand_mines, limits, filename, model_filename, moves_limit, hidden_size, seed):
+    iterations = 1000
     size_x, size_y = size
     model = load_model((size_x * size_y), hidden_size, (size_x * size_y), model_filename)
 
@@ -160,5 +160,6 @@ if __name__ == '__main__':
     print('Loading model:', MODEL_FILENAME)
     DIRECTORY = os.path.join('RESULTS_TEST', 'MLP')
     os.makedirs(DIRECTORY, exist_ok=True)
-    FILENAME = os.path.join(DIRECTORY, f'TestResult_{SIZE}_{DEFAULT_MINES}_{ITERATIONS}.txt')
-    simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, MOVES_LIMIT, HIDDEN_SIZE, SEED, ITERATIONS)
+    MODE = 'full' if MOVES_LIMIT == 0 else f'{MOVES_LIMIT}'
+    FILENAME = os.path.join(DIRECTORY, f'TestResult_{SIZE}_{DEFAULT_MINES}_{MODE}.txt')
+    simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, MOVES_LIMIT, HIDDEN_SIZE, SEED)

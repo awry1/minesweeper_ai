@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split, cross_val_score
 
 # Constants for quick change
 BOARD_SIZE = 10, 10
-ITERATIONS = 1000
 MINES = 10
+MOVES = '1'         # '1', '3', '5', 'full'
 MODEL = 'CNN'       # 'MLP', 'CNN', someday 'ENN'
 
 # Code to process CNN outputs and windows given
@@ -140,10 +140,11 @@ def create_decision_tree(FILENAME):
 
 if __name__ == '__main__':
     DIRECTORY = os.path.join('RESULTS_TEST', f'{MODEL}')
-    FILENAME = os.path.join(DIRECTORY, f'SMP_TestResult_{BOARD_SIZE}_{MINES}_{ITERATIONS}.txt')
+    FILENAME = os.path.join(DIRECTORY, f'SMP_TestResult_{BOARD_SIZE}_{MINES}_{MOVES}.txt')
     decision_tree = create_decision_tree(FILENAME)
     
     # Save the model to a file
     DIRECTORY = os.path.join('DECISION_TREES', f'{MODEL}')
     os.makedirs(DIRECTORY, exist_ok=True)
-    joblib.dump(decision_tree, os.path.join(DIRECTORY, f'DecisionTree_{BOARD_SIZE}_{MINES}_{ITERATIONS}.pkl'), compress=3)  # Using joblib with compression level 3
+    FILENAME = os.path.join(DIRECTORY, f'DecisionTree_{BOARD_SIZE}_{MINES}_{MOVES}.pkl')
+    joblib.dump(decision_tree, FILENAME, compress=3)  # Using joblib with compression level 3
