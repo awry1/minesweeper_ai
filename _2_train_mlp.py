@@ -6,7 +6,7 @@ from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 10, 10       # X, Y
+SIZE = 10, 10        # X, Y
 
 ITERATIONS = 1000    # Iterations in the Data file
 

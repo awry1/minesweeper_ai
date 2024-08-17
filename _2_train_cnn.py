@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 10, 10       # X, Y
+SIZE = 7, 7       # X, Y
 
 ITERATIONS = 10    # Iterations in the Data file
 
