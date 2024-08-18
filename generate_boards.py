@@ -3,7 +3,7 @@ import os
 
 # Constants for quick change
 SIZE = 5, 5     # X, Y
-NUM_MINES = 4
+NUM_MINES = 5
 
 
 def generate_all_boards(size, num_mines, filename):

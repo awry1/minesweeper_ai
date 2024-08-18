@@ -162,8 +162,8 @@ def is_game_finished(game_board, player_board):
 if __name__ == '__main__':
     print('Welcome to Minesweeper!')
     print('Run other files to play the game or train a neural network.')
-    print('0) solve_human.py            play the game manually')
-    print('1) solve_analytical.py       create training data')
-    print('2) train_nn.py               train neural network')
-    print('3) solve_nn.py               test neural network')
+    print('_0_solve_human.py                play the game manually')
+    print('_1_solve_analytical.py           create training data')
+    print('_2_train_mlp.py                  train neural network')
+    print('_3_solve_mlp.py                  test neural network')
     print('Same with 5x5 approach and other types of neural networks.')
