@@ -9,4 +9,4 @@ UWAGI:
 1) Pamiętajcie że rozmiar planszy musi być taki sam przy trenowaniu i testowaniu.
 
 2) Gdzie się da to seed 'alamakota' żeby były jak najbardziej zbliżone wyniki
-Chyba że testowanie to wypadałoby przetestować na jeszce innym datasecie niż treningowy, proponuję seed 'kotmaale'
+Chyba że testowanie to wypadałoby przetestować na jeszcze innym datasecie niż treningowy, proponuję seed 'kotmaale'
