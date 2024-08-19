@@ -7,9 +7,9 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # Constants for quick change
-SIZE = 7, 7       # X, Y
+SIZE = 10, 10       # X, Y
 
-ITERATIONS = 10    # Iterations in the Data file
+ITERATIONS = 50     # Iterations in the Data file
 
 
 def one_hot_encode(board, size_x, size_y):
