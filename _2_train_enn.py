@@ -18,8 +18,10 @@ ENCHANCE = False
 
 # Step 2: Define the model
 class MinesweeperENN(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size):
+    def __init__(self, input_size, output_size):
         super(MinesweeperENN, self).__init__()
+        hidden_sizes = int(0.8 * input_size), int(0.6 * input_size), int(0.4 * input_size), int(0.2 * input_size)
+        self.hidden_sizes = hidden_sizes
         
         # Encoder (as in the autoencoder)
         self.encoder = nn.Sequential(
@@ -38,32 +40,41 @@ class MinesweeperENN(nn.Module):
             nn.Linear(hidden_sizes[2], hidden_sizes[3]),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.BatchNorm1d(hidden_sizes[3]),
+            nn.BatchNorm1d(hidden_sizes[3])
         )
-        
-        # Prediction layer (instead of a decoder)
-        self.predictor = nn.Sequential(
+
+        # Decoder (as in the autoencoder)
+        self.decoder = nn.Sequential(
             nn.Linear(hidden_sizes[3], hidden_sizes[2]),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.BatchNorm1d(hidden_sizes[2]),
-            nn.Linear(hidden_sizes[2], output_size),
+            nn.Linear(hidden_sizes[2], hidden_sizes[1]),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.BatchNorm1d(hidden_sizes[1]),
+            nn.Linear(hidden_sizes[1], hidden_sizes[0]),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.BatchNorm1d(hidden_sizes[0]),
+            nn.Linear(hidden_sizes[0], output_size),
             nn.Sigmoid()  # Ensure outputs are between 0 and 1
         )
 
     def forward(self, boards):
         encoded = self.encoder(boards)
-        risk_board = self.predictor(encoded)
-        return risk_board
+        decoded = self.decoder(encoded)
+        return decoded  # Return the decoded risk_board
 
 
 # Step 3 & 4: Define loss function and optimizer and create training loop
-def train_model(train_loader, input_size, output_size, hidden_sizes, learning_rate, num_epochs, weight_decay):
+def train_model(train_loader, input_size, output_size, learning_rate, num_epochs, weight_decay):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MinesweeperENN(input_size, hidden_sizes, output_size).to(device)  # Move model to device
+    model = MinesweeperENN(input_size, output_size).to(device)  # Move model to device
     criterion = nn.MSELoss()  # Loss function remains the same
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
+    hidden_sizes = model.hidden_sizes
 
     DIRECTORY = os.path.join('RESULTS_TRAIN', 'ENN')
     os.makedirs(DIRECTORY, exist_ok=True)
@@ -100,9 +111,9 @@ def train_model(train_loader, input_size, output_size, hidden_sizes, learning_ra
     print('Model saved:', FILENAME)
 
 
-def enchance_model(train_loader, input_size, output_size, hidden_sizes, learning_rate, weight_decay):
+def enchance_model(train_loader, input_size, output_size, learning_rate, weight_decay):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MinesweeperENN(input_size, hidden_sizes, output_size).to(device)
+    model = MinesweeperENN(input_size,output_size).to(device)
     criterion = nn.MSELoss()  # Loss function remains the same
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
@@ -161,7 +172,6 @@ if __name__ == '__main__':
             train_loader,
             input_size=(size_x * size_y),
             output_size=(size_x * size_y),
-            hidden_sizes=[50, 100, 50, 25],
             learning_rate=0.00005,
             weight_decay=0.000025)
     else:
@@ -169,7 +179,6 @@ if __name__ == '__main__':
             train_loader,
             input_size=(size_x * size_y),
             output_size=(size_x * size_y),
-            hidden_sizes=[50, 100, 50, 25],
             learning_rate=0.00005,
             num_epochs=300,
             weight_decay=0.000025)

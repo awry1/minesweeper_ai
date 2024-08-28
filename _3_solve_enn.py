@@ -11,12 +11,11 @@ RAND_MINES = False
 SEED = 'alamakota'
 LIMITS = 0, 0, 0    # Center, Edge, Corner
 
-MOVES_LIMIT = 1     # 0 - no limit
-HIDDEN_SIZE = [50, 100, 50, 25]
+MOVES_LIMIT = 0     # 0 - no limit
 
 
-def load_model(input_size, hidden_size, output_size, model_filename):
-    model = MinesweeperENN(input_size, hidden_size, output_size)
+def load_model(input_size, output_size, model_filename):
+    model = MinesweeperENN(input_size, output_size)
     model.load_state_dict(torch.load(model_filename))
     model.eval()  # Set the model to evaluation mode
     return model
@@ -117,10 +116,10 @@ def gameloop_torch(size, default_mines, rand_mines, limits, filename, model, mov
             return 'W'
 
 
-def simulation(size, default_mines, rand_mines, limits, filename, model_filename, moves_limit, hidden_size, seed):
+def simulation(size, default_mines, rand_mines, limits, filename, model_filename, moves_limit, seed):
     iterations = 1000
     size_x, size_y = size
-    model = load_model((size_x * size_y), hidden_size, (size_x * size_y), model_filename)
+    model = load_model((size_x * size_y), (size_x * size_y), model_filename)
 
     if os.path.exists(filename):
         # Remove the file if it exists
@@ -162,4 +161,4 @@ if __name__ == '__main__':
     os.makedirs(DIRECTORY, exist_ok=True)
     MODE = 'full' if MOVES_LIMIT == 0 else f'{MOVES_LIMIT}'
     FILENAME = os.path.join(DIRECTORY, f'TestResult_{SIZE}_{DEFAULT_MINES}_{MODE}.txt')
-    simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, MOVES_LIMIT, HIDDEN_SIZE, SEED)
+    simulation(SIZE, DEFAULT_MINES, RAND_MINES, LIMITS, FILENAME, MODEL_FILENAME, MOVES_LIMIT, SEED)
