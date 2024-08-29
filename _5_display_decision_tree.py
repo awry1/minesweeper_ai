@@ -30,7 +30,7 @@ def visualize_decision_tree(decision_tree):
     plot_feature_importances(decision_tree.feature_importances_, feature_names)
 
     DIRECTORY = os.path.join('DECISION_TREES', f'{MODEL}')
-    FILENAME = os.path.join(DIRECTORY, f'DecisionTree_{BOARD_SIZE}_{MINES}_{MOVES}.png')
+    FILENAME = os.path.join(DIRECTORY, f'DecisionTree_{BOARD_SIZE}_{MINES}_{MOVES}.pdf') #.png
 
     plt.figure(figsize=(20, 10))
     plot_tree(decision_tree,
