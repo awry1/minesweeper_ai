@@ -4,7 +4,7 @@ The aim of this project is to show efficiency of chosen neural network implement
 ## What files to run and in what order:
 1. Run *_0_solve_human.py* to play the game manually (optional)
 2. Run *_1_solve_anaytical.py* and *_1_solve_analytical_5x5.py* to create datasets used in training nn models
-3. Run *_2_train_MODEL.py* files to create and train models
-4. Run *_3_solve_MODEL.py* files to check how trained models perform
-5. Run *_4_train_decision_tree.py* to create decision tree showing model preferences when making decisions (uses logs created in point 3)
+3. Run *_2_train_MODEL.py* files to create and train models (adjust *SIZE* accordingly to dataset you want to use)
+4. Run *_3_solve_MODEL.py* files to check how trained models perform (adjust *SIZE* accordingly to model you want to test)
+5. Run *_4_train_decision_tree.py* to create decision tree showing model preferences when making decisions (uses logs created in point 4)
 6. Run *_5_display_decision_tree.py* to display decision trees from previous point
