@@ -1,12 +1,12 @@
-README.txt - Co w folderach piszczy?
+README.txt - What's in the folders?
 
-1) W folderze analytical przechowywane są datasety (na których uczone były/będą modele) oraz logi z win ratio. Datasety mają mieć w miarę możliwości 1000 iteracji (cries in train CNN).
+1) The *analytical* folder contains datasets (on which the models were/are trained) and logs of win ratios. The datasets should ideally have 1000 iterations (cries in train CNN).
 
-2) W folderze neural networks są przechowywane "wyuczone" modele (300 epochów, takie same lr, gammy, itp.), logi z trenowania i testowania oraz drzewa decyzyjne (ofc tylko 5x5). Wszystko uporządkowane jest w odpowiednie foldery. 
-WAŻNE: ilość iteracji w nazwie folderu dotyczy rozmiaru datasetu użytego do trenowania, nie ilości iteracji programu solve.py
+2) The *neural networks* folder stores the "trained" models (300 epochs, the same learning rates, gamma, etc.), training and testing logs, as well as decision trees (of course, only 5x5). Everything is organized into the appropriate folders.
+IMPORTANT: The number of iterations in the folder name refers to the size of the dataset used for training, not the number of iterations in the `solve.py` program.
 
-UWAGI:
-1) Pamiętajcie że rozmiar planszy musi być taki sam przy trenowaniu i testowaniu.
+NOTES:
+1) Remember that the board size must be the same for both training and testing.
 
-2) Gdzie się da to seed 'alamakota' żeby były jak najbardziej zbliżone wyniki
-Chyba że testowanie to wypadałoby przetestować na jeszcze innym datasecie niż treningowy, proponuję seed 'kotmaale'
+2) Where possible, use the seed 'alamakota' to get results that are as similar as possible.
+Unless it's for testing, in which case it’s better to test on a different dataset than the one used for training. I suggest using the seed 'kotmaale' for this.
